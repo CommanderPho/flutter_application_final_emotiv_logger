@@ -1,6 +1,9 @@
 # flutter_application_final_emotiv_logger
 
-A new Flutter project.
+A new Flutter project that tries to decrypt Emotiv Epoc X (or Emotiv Epoc+) data over BLE and stream it over the network via LabStreamingLayer (LSL).
+
+Should work on Android, iOS, linux, and more!
+
 
 ## Getting Started
 
