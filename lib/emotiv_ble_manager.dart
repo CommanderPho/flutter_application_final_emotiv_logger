@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:lsl_flutter/lsl_flutter.dart';
+// import 'package:lsl_flutter/lsl_flutter.dart';
+import 'package:liblsl/lsl.dart';
+import 'package:liblsl/native_liblsl.dart';
 import 'crypto_utils.dart';
 
 class EmotivBLEManager {

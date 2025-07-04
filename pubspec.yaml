@@ -30,10 +30,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  lsl_flutter: ^0.0.4
+  # lsl_flutter: ^0.0.4
   encrypt: ^5.0.3
   flutter_blue_plus: ^1.31.15
   permission_handler: ^12.0.0+1
+  liblsl: ^0.5.1
 
 
 
