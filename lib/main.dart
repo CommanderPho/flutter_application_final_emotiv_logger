@@ -14,7 +14,7 @@ class EmotivBLEApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Emotiv BLE App',
+      title: 'Emotiv BLE LSL Logger',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         useMaterial3: true,
@@ -134,7 +134,7 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Emotiv BLE App'),
+        title: const Text('Emotiv BLE LSL Logger'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: Padding(
@@ -150,7 +150,7 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Status',
+                      'Device Status',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
