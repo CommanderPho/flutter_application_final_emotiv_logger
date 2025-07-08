@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:path_provider/path_provider.dart';
 // import 'package:lsl_flutter/lsl_flutter.dart';
 import 'crypto_utils.dart';
 
@@ -24,6 +27,14 @@ class EmotivBLEManager {
   final StreamController<Uint8List> _memsDataController = StreamController<Uint8List>.broadcast();
   final StreamController<bool> _connectionController = StreamController<bool>.broadcast();
   final StreamController<String> _statusController = StreamController<String>.broadcast();
+  
+  // File writing related variables
+  File? _eegDataFile;
+  IOSink? _eegDataSink;
+  Timer? _flushTimer;
+  final List<String> _writeBuffer = [];
+  static const int _bufferSize = 100; // Buffer 100 entries before writing
+  static const int _flushIntervalMs = 1000; // Flush every second
   
   // Getters for streams
   Stream<List<double>> get eegDataStream => _eegDataController.stream;
@@ -86,6 +97,9 @@ class EmotivBLEManager {
       _connectionController.add(true);
       
       _updateStatus("Connected to ${device.platformName}");
+      
+      // Initialize file writer after successful connection
+      await _initializeFileWriter();
       
       // Listen for disconnection
       device.connectionState.listen((state) {
@@ -177,6 +191,30 @@ class EmotivBLEManager {
     }
   }
   
+  Future<void> _initializeFileWriter() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
+      final fileName = 'eeg_data_$timestamp.csv';
+      
+      _eegDataFile = File('${directory.path}/$fileName');
+      _eegDataSink = _eegDataFile!.openWrite();
+      
+      // Write CSV header
+      _eegDataSink!.writeln('timestamp,channel_1,channel_2,channel_3,channel_4,channel_5,channel_6,channel_7,channel_8,channel_9,channel_10,channel_11,channel_12,channel_13,channel_14');
+      
+      // Setup periodic flush timer
+      _flushTimer = Timer.periodic(Duration(milliseconds: _flushIntervalMs), (_) {
+        _flushBuffer();
+      });
+      
+      _updateStatus("File writer initialized: $fileName");
+      
+    } catch (e) {
+      _updateStatus("Error initializing file writer: $e");
+    }
+  }
+  
   void _processEEGData(Uint8List data) {
     if (!_validateData(data)) return;
     
@@ -186,6 +224,63 @@ class EmotivBLEManager {
     if (decodedValues.isNotEmpty) {
       _eegDataController.add(decodedValues);
       print("EEG Data: ${decodedValues.take(5).join(', ')}..."); // Print first 5 values
+      
+      // Write to file
+      _writeEEGDataToFile(decodedValues);
+    }
+  }
+  
+  void _writeEEGDataToFile(List<double> eegData) {
+    if (_eegDataSink == null) return;
+    
+    try {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final csvLine = '$timestamp,${eegData.join(',')}';
+      
+      // Add to buffer
+      _writeBuffer.add(csvLine);
+      
+      // Write buffer if it's full
+      if (_writeBuffer.length >= _bufferSize) {
+        _flushBuffer();
+      }
+      
+    } catch (e) {
+      _updateStatus("Error writing EEG data to file: $e");
+    }
+  }
+  
+  void _flushBuffer() {
+    if (_eegDataSink == null || _writeBuffer.isEmpty) return;
+    
+    try {
+      for (String line in _writeBuffer) {
+        _eegDataSink!.writeln(line);
+      }
+      _eegDataSink!.flush();
+      _writeBuffer.clear();
+      
+    } catch (e) {
+      _updateStatus("Error flushing buffer: $e");
+    }
+  }
+  
+  Future<void> _closeFileWriter() async {
+    try {
+      _flushTimer?.cancel();
+      _flushTimer = null;
+      
+      // Flush any remaining data
+      _flushBuffer();
+      
+      await _eegDataSink?.close();
+      _eegDataSink = null;
+      _eegDataFile = null;
+      
+      _updateStatus("File writer closed");
+      
+    } catch (e) {
+      _updateStatus("Error closing file writer: $e");
     }
   }
   
@@ -205,6 +300,9 @@ class EmotivBLEManager {
     _connectionController.add(false);
     _updateStatus("Disconnected - restarting scan...");
     
+    // Close file writer
+    _closeFileWriter();
+    
     // Optionally restart scanning
     Future.delayed(const Duration(seconds: 2), () {
       startScanning();
@@ -220,12 +318,30 @@ class EmotivBLEManager {
     if (_emotivDevice != null && _isConnected) {
       await _emotivDevice!.disconnect();
     }
+    await _closeFileWriter();
   }
   
   void dispose() {
+    _closeFileWriter();
     _eegDataController.close();
     _memsDataController.close();
     _connectionController.close();
     _statusController.close();
+  }
+  
+  // Utility method to get current file info
+  Future<Map<String, dynamic>?> getFileInfo() async {
+    if (_eegDataFile == null) return null;
+    
+    try {
+      final stat = await _eegDataFile!.stat();
+      return {
+        'path': _eegDataFile!.path,
+        'size': stat.size,
+        'modified': stat.modified.toIso8601String(),
+      };
+    } catch (e) {
+      return null;
+    }
   }
 }
