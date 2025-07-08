@@ -22,7 +22,7 @@ class EmotivBLEApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         useMaterial3: true,
       ),
-      home: const EmotivHomePage(),
+      home: EmotivHomePage(storage: FileStorage.new(),),
     );
   }
 }
