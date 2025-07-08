@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -27,7 +28,8 @@ class EmotivBLEApp extends StatelessWidget {
 }
 
 class EmotivHomePage extends StatefulWidget {
-  const EmotivHomePage({super.key});
+  const EmotivHomePage({super.key, required this.storage});
+  final FileStorage storage;
 
   @override
   State<EmotivHomePage> createState() => _EmotivHomePageState();
@@ -41,12 +43,22 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
   late StreamSubscription _eegSubscription;
   late StreamSubscription _statusSubscription;
   late StreamSubscription _connectionSubscription;
+  int _counter = 0;
 
+  @override
   @override
   void initState() {
     super.initState();
     _initializeBluetooth();
     _setupStreamListeners();
+    // File storage setup
+    widget.storage.readCounter().then((value) {
+      setState(() {
+        _counter = value;
+      });
+    });
+
+
   }
 
   void _setupStreamListeners() {
@@ -67,6 +79,15 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
         _isConnected = connected;
       });
     });
+  }
+
+  Future<File> _incrementCounter() {
+    setState(() {
+      _counter++;
+    });
+
+    // Write the variable as a string to the file.
+    return widget.storage.writeCounter(_counter);
   }
 
   Future<void> _initializeBluetooth() async {
