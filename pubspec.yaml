@@ -35,6 +35,7 @@ dependencies:
   flutter_blue_plus: ^1.31.15
   permission_handler: ^12.0.0+1
   liblsl: ^0.8.0
+  path_provider: ^2.1.5
   # liblsl: ^0.5.1
 
 
