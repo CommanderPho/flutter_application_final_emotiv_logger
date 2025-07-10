@@ -31,6 +31,9 @@ class EmotivBLEManager {
   // File writer instance
   EEGFileWriter? _fileWriter;
   
+  // Add this field
+  String? _customSaveDirectory;
+  
   // Getters for streams
   Stream<List<double>> get eegDataStream => _eegDataController.stream;
   Stream<Uint8List> get memsDataStream => _memsDataController.stream;
@@ -39,6 +42,36 @@ class EmotivBLEManager {
   
   bool get isConnected => _isConnected;
   bool get isScanning => _isScanning;
+  
+  // Add method to set custom directory
+  void setCustomSaveDirectory(String? directoryPath) {
+    _customSaveDirectory = directoryPath;
+  }
+  
+  Future<void> _initializeFileWriter() async {
+    try {
+      // Dispose existing file writer if any
+      await _fileWriter?.dispose();
+      
+      // Create new file writer with custom directory
+      _fileWriter = EEGFileWriter(
+        onStatusUpdate: _updateStatus,
+        customDirectoryPath: _customSaveDirectory, // Pass custom directory
+      );
+      
+      // Initialize the file writer
+      final success = await _fileWriter!.initialize();
+      
+      if (!success) {
+        _updateStatus("Failed to initialize file writer");
+        _fileWriter = null;
+      }
+      
+    } catch (e) {
+      _updateStatus("Error initializing file writer: $e");
+      _fileWriter = null;
+    }
+  }
   
   Future<void> startScanning() async {
     if (_isScanning) return;
@@ -129,7 +162,7 @@ class EmotivBLEManager {
           
           if (characteristic.uuid.toString().toUpperCase() == transferDataUuid.toUpperCase()) {
             _dataCharacteristic = characteristic;
-            await _setupDataCharacteristic(characteristic);
+            await _setupEEGDataCharacteristic(characteristic);
           } else if (characteristic.uuid.toString().toUpperCase() == transferMemsUuid.toUpperCase()) {
             _memsCharacteristic = characteristic;
             await _setupMemsCharacteristic(characteristic);
@@ -144,7 +177,7 @@ class EmotivBLEManager {
     }
   }
   
-  Future<void> _setupDataCharacteristic(BluetoothCharacteristic characteristic) async {
+  Future<void> _setupEEGDataCharacteristic(BluetoothCharacteristic characteristic) async {
     try {
       // Enable notifications
       await characteristic.setNotifyValue(true);
@@ -186,29 +219,6 @@ class EmotivBLEManager {
     }
   }
   
-  Future<void> _initializeFileWriter() async {
-    try {
-      // Dispose existing file writer if any
-      await _fileWriter?.dispose();
-      
-      // Create new file writer with status callback
-      _fileWriter = EEGFileWriter(
-        onStatusUpdate: _updateStatus,
-      );
-      
-      // Initialize the file writer
-      final success = await _fileWriter!.initialize();
-      
-      if (!success) {
-        _updateStatus("Failed to initialize file writer");
-        _fileWriter = null;
-      }
-      
-    } catch (e) {
-      _updateStatus("Error initializing file writer: $e");
-      _fileWriter = null;
-    }
-  }
   
   void _processEEGData(Uint8List data) {
     if (!_validateData(data)) return;
@@ -244,12 +254,13 @@ class EmotivBLEManager {
     // Close file writer immediately to prevent timer conflicts
     _closeFileWriter();
     
-    // Optionally restart scanning
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!_isConnected) { // Only restart if still disconnected
-        startScanning();
-      }
-    });
+    // // Optionally restart scanning
+    // Future.delayed(const Duration(seconds: 2), () {
+    //   if (!_isConnected) { // Only restart if still disconnected
+    //     startScanning();
+    //   }
+    // });
+
   }
   
   Future<void> _closeFileWriter() async {
@@ -268,7 +279,9 @@ class EmotivBLEManager {
     if (_emotivDevice != null && _isConnected) {
       await _emotivDevice!.disconnect();
     }
-    await _closeFileWriter();
+    else {
+      await _closeFileWriter();
+    }
   }
   
   void dispose() {

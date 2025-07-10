@@ -17,20 +17,53 @@ class EEGFileWriter {
   // Callback for status updates
   final Function(String)? onStatusUpdate;
   
-  EEGFileWriter({this.onStatusUpdate});
+  // Custom directory path
+  final String? customDirectoryPath;
+  
+  EEGFileWriter({
+    this.onStatusUpdate,
+    this.customDirectoryPath, // Add this parameter
+  });
   
   /// Initialize the file writer with CSV header
   Future<bool> initialize() async {
     if (_isInitialized || _isDisposed) return false;
     
     try {
-      final directory = await getApplicationDocumentsDirectory();
+      Directory targetDirectory;
+      
+      // Use custom directory if provided, otherwise use app documents directory
+      if (customDirectoryPath != null && customDirectoryPath!.isNotEmpty) {
+        targetDirectory = Directory(customDirectoryPath!);
+        
+        // Create the directory if it doesn't exist
+        if (!await targetDirectory.exists()) {
+          try {
+            await targetDirectory.create(recursive: true);
+            _updateStatus("Created directory: ${targetDirectory.path}");
+          } catch (e) {
+            _updateStatus("Error creating directory: $e");
+            return false;
+          }
+        }
+        
+        // Verify we can write to the directory
+        if (!await _canWriteToDirectory(targetDirectory)) {
+          _updateStatus("Cannot write to directory: ${targetDirectory.path}");
+          return false;
+        }
+        
+      } else {
+        // Use default app documents directory
+        targetDirectory = await getApplicationDocumentsDirectory();
+      }
+      
       final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
       final fileName = 'eeg_data_$timestamp.csv';
       
-      print("Active App Directory: ${directory.path}");
-      _eegDataFile = File('${directory.path}/$fileName');
-      print("_eegDataFile: ${_eegDataFile?.path}");
+      print("Target Directory: ${targetDirectory.path}");
+      _eegDataFile = File('${targetDirectory.path}/$fileName');
+      print("EEG Data File: ${_eegDataFile?.path}");
 
       _eegDataSink = _eegDataFile!.openWrite();
       
@@ -43,11 +76,23 @@ class EEGFileWriter {
       });
       
       _isInitialized = true;
-      _updateStatus("File writer initialized: $fileName");
+      _updateStatus("File writer initialized: $fileName in ${targetDirectory.path}");
       return true;
       
     } catch (e) {
       _updateStatus("Error initializing file writer: $e");
+      return false;
+    }
+  }
+
+  /// Check if we can write to the specified directory
+  Future<bool> _canWriteToDirectory(Directory directory) async {
+    try {
+      final testFile = File('${directory.path}/.test_write');
+      await testFile.writeAsString('test');
+      await testFile.delete();
+      return true;
+    } catch (e) {
       return false;
     }
   }
