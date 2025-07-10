@@ -46,7 +46,6 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
   int _counter = 0;
 
   @override
-  @override
   void initState() {
     super.initState();
     _initializeBluetooth();
@@ -57,8 +56,6 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
         _counter = value;
       });
     });
-
-
   }
 
   void _setupStreamListeners() {
@@ -122,6 +119,8 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
       Permission.bluetoothConnect,
       Permission.bluetoothAdvertise,
       Permission.location,
+      Permission.manageExternalStorage,
+      Permission.storage,
     ].request();
 
     bool allGranted = permissions.values.every((status) => status.isGranted);
