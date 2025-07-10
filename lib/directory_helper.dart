@@ -1,38 +1,42 @@
 import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:device_info_plus/device_info_plus.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:device_info_plus/device_info_plus.dart'; // Add this import
+import 'package:path_provider/path_provider.dart'; // Add this too
 
 class DirectoryHelper {
   /// Request storage permissions with better Android version handling
   static Future<bool> requestStoragePermission() async {
     if (Platform.isAndroid) {
-      // Check Android version
-      final androidInfo = await DeviceInfoPlugin().androidInfo;
-      final sdkInt = androidInfo.version.sdkInt;
-      
-      if (sdkInt >= 30) {
-        // Android 11+ (API 30+) - Need MANAGE_EXTERNAL_STORAGE
-        var status = await Permission.manageExternalStorage.status;
-        if (!status.isGranted) {
-          status = await Permission.manageExternalStorage.request();
-          if (!status.isGranted) {
-            // For Android 11+, we might need to open settings
-            await openAppSettings();
-            return false;
-          }
-        }
-        return true;
-      } else {
-        // Android 10 and below - Use regular storage permission
-        final permissions = await [
-          Permission.storage,
-          Permission.photos, // For some devices
-        ].request();
+      try {
+        // Check Android version
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        final sdkInt = androidInfo.version.sdkInt;
         
-        return permissions.values.every((status) => 
-          status.isGranted || status.isLimited);
+        if (sdkInt >= 30) {
+          // Android 11+ (API 30+) - Need MANAGE_EXTERNAL_STORAGE
+          var status = await Permission.manageExternalStorage.status;
+          if (!status.isGranted) {
+            status = await Permission.manageExternalStorage.request();
+            if (!status.isGranted) {
+              // For Android 11+, we might need to open settings
+              await openAppSettings();
+              return false;
+            }
+          }
+          return true;
+        } else {
+          // Android 10 and below - Use regular storage permission
+          final permissions = await [
+            Permission.storage,
+          ].request();
+          
+          return permissions.values.every((status) => 
+            status.isGranted || status.isLimited);
+        }
+      } catch (e) {
+        print("Error requesting storage permission: $e");
+        return false;
       }
     }
     return true; // iOS doesn't need explicit permission for file picker
@@ -41,13 +45,18 @@ class DirectoryHelper {
   /// Check current permission status
   static Future<bool> hasStoragePermission() async {
     if (Platform.isAndroid) {
-      final androidInfo = await DeviceInfoPlugin().androidInfo;
-      final sdkInt = androidInfo.version.sdkInt;
-      
-      if (sdkInt >= 30) {
-        return await Permission.manageExternalStorage.isGranted;
-      } else {
-        return await Permission.storage.isGranted;
+      try {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        final sdkInt = androidInfo.version.sdkInt;
+        
+        if (sdkInt >= 30) {
+          return await Permission.manageExternalStorage.isGranted;
+        } else {
+          return await Permission.storage.isGranted;
+        }
+      } catch (e) {
+        print("Error checking storage permission: $e");
+        return false;
       }
     }
     return true;
@@ -82,5 +91,31 @@ class DirectoryHelper {
     }
     
     return directories;
+  }
+  
+  /// Debug method to check permissions
+  static Future<void> debugPermissions() async {
+    print("=== Permission Debug Info ===");
+    
+    if (Platform.isAndroid) {
+      try {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        print("Android SDK: ${androidInfo.version.sdkInt}");
+        
+        final permissions = [
+          Permission.storage,
+          Permission.manageExternalStorage,
+        ];
+        
+        for (final permission in permissions) {
+          final status = await permission.status;
+          print("${permission.toString()}: ${status.toString()}");
+        }
+      } catch (e) {
+        print("Error in debug permissions: $e");
+      }
+    }
+    
+    print("=== End Debug Info ===");
   }
 }
