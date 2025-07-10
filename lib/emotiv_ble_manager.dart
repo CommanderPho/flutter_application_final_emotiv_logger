@@ -197,7 +197,10 @@ class EmotivBLEManager {
       final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
       final fileName = 'eeg_data_$timestamp.csv';
       
+      print("Active App Directory: ${directory.path}");
       _eegDataFile = File('${directory.path}/$fileName');
+      print("_eegDataFile: ${_eegDataFile?.path}");
+
       _eegDataSink = _eegDataFile!.openWrite();
       
       // Write CSV header
