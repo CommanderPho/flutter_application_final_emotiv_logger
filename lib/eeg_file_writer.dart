@@ -56,12 +56,6 @@ class EEGFileWriter {
   void writeEEGData(List<double> eegData) {
     if (!_isInitialized || _isDisposed || _eegDataSink == null) return;
     
-    // Check if sink is still valid
-    if (_eegDataSink!.done.isCompleted) {
-      _updateStatus("Cannot write to closed file");
-      return;
-    }
-    
     try {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final csvLine = '$timestamp,${eegData.join(',')}';
@@ -78,18 +72,13 @@ class EEGFileWriter {
       _updateStatus("Error writing EEG data to file: $e");
     }
   }
-  
+
+
   /// Flush the buffer to file
   void _flushBuffer() {
     if (_eegDataSink == null || _writeBuffer.isEmpty || _isDisposed) return;
     
     try {
-      // Check if the sink is still valid before using it
-      if (_eegDataSink!.done.isCompleted) {
-        print("Sink is already closed, skipping flush");
-        return;
-      }
-      
       for (String line in _writeBuffer) {
         _eegDataSink!.writeln(line);
       }
@@ -103,6 +92,7 @@ class EEGFileWriter {
       _flushTimer = null;
     }
   }
+
   
   /// Force flush any remaining data
   void flush() {
@@ -148,8 +138,8 @@ class EEGFileWriter {
       _flushTimer?.cancel();
       _flushTimer = null;
       
-      // Flush any remaining data only if sink is still valid
-      if (_eegDataSink != null && !_eegDataSink!.done.isCompleted) {
+      // Flush any remaining data
+      if (_eegDataSink != null) {
         _flushBuffer();
         await _eegDataSink!.close();
       }
@@ -170,7 +160,8 @@ class EEGFileWriter {
       _isInitialized = false;
     }
   }
-  
+
+  /// Update the status message
   void _updateStatus(String status) {
     print("EEGFileWriter: $status");
     onStatusUpdate?.call(status);
