@@ -9,7 +9,7 @@ class EEGFileWriter {
   final List<String> _writeBuffer = [];
   
   static const int _bufferSize = 100; // Buffer 100 entries before writing
-  static const int _flushIntervalMs = 1000; // Flush every second
+  static const int _flushIntervalMs = 3000; // Flush every second
   
   bool _isInitialized = false;
   bool _isDisposed = false;
@@ -175,7 +175,7 @@ class EEGFileWriter {
   /// Close the file writer and cleanup resources
   Future<void> dispose() async {
     if (_isDisposed) return;
-    
+    print("EEGFileWriter.dispose(): closing EEG Data File: ${_eegDataFile?.path}");
     _isDisposed = true;
     
     try {
@@ -194,6 +194,7 @@ class EEGFileWriter {
       _writeBuffer.clear();
       _isInitialized = false;
       
+      print("EEGFileWriter.dispose(): File writer closed");
       _updateStatus("File writer closed");
       
     } catch (e) {
