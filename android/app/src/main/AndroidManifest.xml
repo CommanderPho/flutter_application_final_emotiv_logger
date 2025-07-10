@@ -53,13 +53,12 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity>
-            <!-- Add this intent filter for file access -->
+        <!-- <activity>
             <intent-filter>
                 <action android:name="android.intent.action.OPEN_DOCUMENT_TREE" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-        </activity>
+        </activity> -->
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

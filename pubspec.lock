@@ -340,10 +340,10 @@ packages:
     dependency: transitive
     description:
       name: native_toolchain_c
-      sha256: c1bf2d24a381ac45d931d509438a76f61aa74d6f4967023bc1a4a28d2f46f063
+      sha256: "74a0c80d877c519bc6bde2c4e27b6b01c1f93c9b480f65ceae8bedd3aba3c086"
       url: "https://pub.dev"
     source: hosted
-    version: "0.16.7"
+    version: "0.16.8"
   path:
     dependency: transitive
     description:
