@@ -45,6 +45,7 @@ class EmotivBLEManager {
   
   // Add method to set custom directory
   void setCustomSaveDirectory(String? directoryPath) {
+     print("EmotivBLEManager: Updating custom save directory directoryPath: ${directoryPath}");
     _customSaveDirectory = directoryPath;
   }
   
@@ -63,12 +64,12 @@ class EmotivBLEManager {
       final success = await _fileWriter!.initialize();
       
       if (!success) {
-        _updateStatus("Failed to initialize file writer");
+        _updateStatus("EmotivBLEManager: Failed to initialize file writer");
         _fileWriter = null;
       }
       
     } catch (e) {
-      _updateStatus("Error initializing file writer: $e");
+      _updateStatus("EmotivBLEManager: Error initializing file writer: $e");
       _fileWriter = null;
     }
   }
@@ -77,7 +78,7 @@ class EmotivBLEManager {
     if (_isScanning) return;
     
     _isScanning = true;
-    _updateStatus("Starting scan for Emotiv devices...");
+    _updateStatus("EmotivBLEManager: Starting scan for Emotiv devices...");
     
     try {
       // Start scanning for devices with the specific service UUID
@@ -90,7 +91,7 @@ class EmotivBLEManager {
       FlutterBluePlus.scanResults.listen((results) {
         for (ScanResult result in results) {
           _updateStatus("Found device: ${result.device.platformName}");
-          print("Found device: ${result.device.platformName} (${result.device.remoteId})");
+          print("EmotivBLEManager: Found device: ${result.device.platformName} (${result.device.remoteId})");
           
           // Connect to the first Emotiv device found
           if (result.device.platformName.isNotEmpty) {
@@ -237,7 +238,7 @@ class EmotivBLEManager {
   
   bool _validateData(Uint8List data) {
     if (data.length < readSize) {
-      print("Data size too small: ${data.length}");
+      print("EmotivBLEManager: Data size too small: ${data.length}");
       return false;
     }
     return true;
