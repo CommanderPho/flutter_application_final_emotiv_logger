@@ -45,6 +45,7 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
   late StreamSubscription _statusSubscription;
   late StreamSubscription _connectionSubscription;
   int _counter = 0;
+  bool _useLSLStreams = false;
   
   // Add this field to store the selected directory
   String? _selectedDirectory;
@@ -53,7 +54,9 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
   void initState() {
     super.initState();
     _initializeBluetooth();
-    _setupStreamListeners();
+    if (_useLSLStreams == true) {
+      _setupStreamListeners();
+    }
     // File storage setup
     widget.storage.readCounter().then((value) {
       setState(() {
@@ -63,6 +66,7 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
   }
 
   void _setupStreamListeners() {
+    // setup labstreaminglayer streams
     _eegSubscription = _bleManager.eegDataStream.listen((data) {
       setState(() {
         _latestEEGData = data;
@@ -170,6 +174,7 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
     // Handle the result if the user selected a new directory
     if (result != null && result is String) {
       setState(() {
+         print("File settings return context result: ${result}");
         _selectedDirectory = result;
       });
       
