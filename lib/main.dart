@@ -48,7 +48,7 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
   bool _useLSLStreams = false;
   
   // Add this field to store the selected directory
-  String? _selectedDirectory;
+  String? _selectedDirectory; // "/storage/emulated/0/DATA/EEG"
 
   @override
   void initState() {
@@ -57,12 +57,12 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
     if (_useLSLStreams == true) {
       _setupStreamListeners();
     }
-    // File storage setup
-    widget.storage.readCounter().then((value) {
-      setState(() {
-        _counter = value;
-      });
-    });
+	// // File storage setup
+	// widget.storage.readCounter().then((value) {
+	//   setState(() {
+	//     _counter = value;
+	//   });
+	// });
   }
 
   void _setupStreamListeners() {
@@ -358,7 +358,8 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
 }
 
 
-// In your main app or settings screen
+///////////////////////////////////////////////////////////////////////////
+// Settings Screen
 class FileSettingsScreen extends StatefulWidget {
   FileSettingsScreen(String? selectedDirectory);
 
@@ -463,6 +464,7 @@ class _FileSettingsScreenState extends State<FileSettingsScreen> {
   void _applySettings() {
     // Apply to your BLE manager
     // emotivBLEManager.setCustomSaveDirectory(_selectedDirectory);
-    Navigator.pop(context);
+	Navigator.pop(context, _selectedDirectory);
+    
   }
 }
