@@ -1,12 +1,9 @@
 {
 	"folders": [
-		{
-			"path": "."
-		},
-		{
-			"path": "../python-emotiv"
-		}
-	],
+        {
+            "path": "."
+        }
+    ],
 	"settings": {
         "workbench.colorCustomizations": {
             "editor.lineHighlightBackground": "#7d4b102d",
@@ -30,5 +27,10 @@
             "statusBar.foreground": "#ffffff",
             "sideBarSectionHeader.border": "#cecece"
         }
-	}
+    },
+    "extensions": {
+        "recommendations": [
+            "dart-code.flutter"
+        ]
+    }
 }
