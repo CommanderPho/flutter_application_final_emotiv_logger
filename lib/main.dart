@@ -44,7 +44,7 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
   late StreamSubscription _eegSubscription;
   late StreamSubscription _statusSubscription;
   late StreamSubscription _connectionSubscription;
-  int _counter = 0;
+
   bool _useLSLStreams = false;
   
   // Add this field to store the selected directory
