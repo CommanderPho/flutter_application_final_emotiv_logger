@@ -162,9 +162,20 @@ Future<void> _toggleScanning() async {
 
 // Add this method to your _EmotivHomePageState class
 Future<void> _connectToDeviceByName(String deviceName) async {
-	// You'll need to modify your BLE manager to support connecting by name
-	// For now, you can call your existing connect method
-	await _bleManager.connectToDeviceByName(deviceName);
+  try {
+    await _bleManager.connectToDeviceByName(deviceName);
+    // Update connected device name on successful connection
+    setState(() {
+      _connectedDeviceName = deviceName;
+    });
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Failed to connect to $deviceName: $e'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
 }
 
   @override
