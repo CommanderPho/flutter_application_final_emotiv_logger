@@ -164,6 +164,29 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
 	await _bleManager.disconnect();
   }
 
+Future<void> _toggleScanning() async {
+	if (_bleManager.isScanning) {
+		await _stopScanning();
+	} else {
+		await _startScanning();
+	}
+}
+
+// You'll need to add a method to update found devices
+// This would typically be called from your BLE manager when devices are discovered
+void _updateFoundDevices(List<String> devices) {
+	setState(() {
+		_foundDevices = devices;
+	});
+}
+
+// Update connected device name when connection changes
+void _updateConnectedDevice(String deviceName) {
+	setState(() {
+		_connectedDeviceName = deviceName;
+	});
+}
+
   @override
   void dispose() {
 	_eegSubscription.cancel();
