@@ -22,6 +22,9 @@ class EmotivBLEManager {
 	bool _shouldAutoConnectToFirst = false;
 	bool _isConnected = false;
 	bool _isScanning = false;
+	
+	// Add this field to store discovered devices
+	List<BluetoothDevice> _discoveredDevices = [];
 
 	// Stream controllers for data
 	final StreamController<List<double>> _eegDataController = StreamController<List<double>>.broadcast();
@@ -83,6 +86,9 @@ class EmotivBLEManager {
 
 		_isScanning = true;
 		_updateStatus("EmotivBLEManager: Starting scan for Emotiv devices...");
+		
+		// Clear previous discoveries
+		_discoveredDevices.clear();
 
 		try {
 		// Start scanning for devices with the specific service UUID
@@ -93,14 +99,18 @@ class EmotivBLEManager {
 
 		// Listen for scan results
 		FlutterBluePlus.scanResults.listen((results) {
+			// Store the actual devices
+			_discoveredDevices = results
+				.map((result) => result.device)
+				.where((device) => device.platformName.isNotEmpty)
+				.toList();
+			
 			// Extract device names for your list
-			List<String> deviceNames = results
-				.map((result) => result.device.platformName)
-				.where((name) => name.isNotEmpty)
+			List<String> deviceNames = _discoveredDevices
+				.map((device) => device.platformName)
 				.toList();
 			
 			// Update your UI with the found devices
-			// You'll need to add this method to your BLE manager:
 			_updateFoundDevices(deviceNames);		
 
 			for (ScanResult result in results) {
@@ -119,6 +129,29 @@ class EmotivBLEManager {
 		} catch (e) {
 			_updateStatus("Error starting scan: $e");
 			_isScanning = false;
+		}
+	}
+	
+	// Add this new method
+	Future<void> connectToDeviceByName(String deviceName) async {
+		try {
+		  // Find the device with the matching name
+		  final device = _discoveredDevices.firstWhere(
+			(device) => device.platformName == deviceName,
+			orElse: () => throw Exception('Device not found: $deviceName'),
+		  );
+		  
+		  // Stop scanning before connecting
+		  if (_isScanning) {
+			await stopScanning();
+		  }
+		  
+		  // Connect to the found device
+		  await connectToDevice(device);
+		  
+		} catch (e) {
+		  _updateStatus("Failed to connect to $deviceName: $e");
+		  throw e; // Re-throw so the UI can handle it
 		}
 	}
 

@@ -93,14 +93,7 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
 
   }
 
-  // Future<File> _incrementCounter() {
-  //   setState(() {
-  //     _counter++;
-  //   });
 
-  //   // Write the variable as a string to the file.
-  //   return widget.storage.writeCounter(_counter);
-  // }
 
   Future<void> _initializeBluetooth() async {
 	// Request permissions
@@ -166,19 +159,11 @@ Future<void> _toggleScanning() async {
 	}
 }
 
-// You'll need to add a method to update found devices
-// This would typically be called from your BLE manager when devices are discovered
-void _updateFoundDevices(List<String> devices) {
-	setState(() {
-		_foundDevices = devices;
-	});
-}
-
-// Update connected device name when connection changes
-void _updateConnectedDevice(String deviceName) {
-	setState(() {
-		_connectedDeviceName = deviceName;
-	});
+// Add this method to your _EmotivHomePageState class
+Future<void> _connectToDeviceByName(String deviceName) async {
+	// You'll need to modify your BLE manager to support connecting by name
+	// For now, you can call your existing connect method
+	await _bleManager.connectToDeviceByName(deviceName);
 }
 
   @override
@@ -283,6 +268,7 @@ void _updateConnectedDevice(String deviceName) {
 			  foundDevices: _foundDevices,
 			  onToggleScan: _toggleScanning,
 			  onDisconnect: _disconnect,
+			  onConnectToDevice: _connectToDeviceByName,
 			),
 			
 			const SizedBox(height: 16),
@@ -381,12 +367,14 @@ class ScannerWidget extends StatelessWidget {
   final bool isScanning;
   final VoidCallback onToggleScan;
   final List<String> foundDevices;
+  final void Function(String deviceName) onConnectToDevice; // Add this
 
   const ScannerWidget({
     super.key,
     required this.isScanning,
     required this.onToggleScan,
     required this.foundDevices,
+    required this.onConnectToDevice, // Add this
   });
 
   @override
@@ -413,11 +401,21 @@ class ScannerWidget extends StatelessWidget {
 
 	const SizedBox(height: 8),
 
-	// Device list
-	...foundDevices.map((device) =>
+	// Device list with connect buttons
+	...foundDevices.map((device) => 
 	  Padding(
 	    padding: const EdgeInsets.symmetric(vertical: 4.0),
-	    child: Text('• $device'),
+	    child: Row(
+	      children: [
+		Expanded(
+		  child: Text('• $device'),
+		),
+		ElevatedButton(
+		  onPressed: () => onConnectToDevice(device),
+		  child: const Text('Connect'),
+		),
+	      ],
+	    ),
 	  ),
 	),
       ],
@@ -468,6 +466,7 @@ class BluetoothControlWidget extends StatelessWidget {
   final List<String> foundDevices;
   final VoidCallback onToggleScan;
   final VoidCallback onDisconnect;
+  final void Function(String deviceName) onConnectToDevice;
 
   const BluetoothControlWidget({
     super.key,
@@ -477,6 +476,7 @@ class BluetoothControlWidget extends StatelessWidget {
     required this.foundDevices,
     required this.onToggleScan,
     required this.onDisconnect,
+    required this.onConnectToDevice,
   });
 
   @override
@@ -490,6 +490,7 @@ class BluetoothControlWidget extends StatelessWidget {
 	    isScanning: isScanning,
 	    onToggleScan: onToggleScan,
 	    foundDevices: foundDevices,
+	    onConnectToDevice: onConnectToDevice,
 	  );
   }
 }
