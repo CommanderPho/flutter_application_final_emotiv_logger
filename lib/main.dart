@@ -58,43 +58,37 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
   void initState() {
 	super.initState();
 	_initializeBluetooth();
-	if (_useLSLStreams == true) {
-	  _setupStreamListeners();
-	}
-	// // File storage setup
-	// widget.storage.readCounter().then((value) {
-	//   setState(() {
-	//     _counter = value;
-	//   });
-	// });
+	_setupStreamListeners();
   }
 
   void _setupStreamListeners() {
-	// setup labstreaminglayer streams
-	_eegSubscription = _bleManager.eegDataStream.listen((data) {
-	  setState(() {
-		_latestEEGData = data;
-	  });
-	});
-
-	_statusSubscription = _bleManager.statusStream.listen((status) {
-	  setState(() {
-		_statusMessage = status;
-	  });
-	});
-
-	_connectionSubscription = _bleManager.connectionStream.listen((connected) {
-	  setState(() {
-		_isConnected = connected;
-	  });
-	});
-
 	// Add this listener for found devices
 	_bleManager.foundDevicesStream.listen((devices) {
 		setState(() {
 			_foundDevices = devices;
 		});
 	});
+
+	if (_useLSLStreams == true) {
+		// setup labstreaminglayer streams
+		_eegSubscription = _bleManager.eegDataStream.listen((data) {
+		setState(() {
+			_latestEEGData = data;
+		});
+		});
+
+		_statusSubscription = _bleManager.statusStream.listen((status) {
+		setState(() {
+			_statusMessage = status;
+		});
+		});
+
+		_connectionSubscription = _bleManager.connectionStream.listen((connected) {
+		setState(() {
+			_isConnected = connected;
+		});
+		});
+	}
 	
 
   }
