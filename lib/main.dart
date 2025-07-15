@@ -358,6 +358,127 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
 }
 
 
+
+
+///////////////////////////////////////////////////////////////////////////
+// EEG Connections Widget
+class ScannerWidget extends StatelessWidget {
+  final bool isScanning;
+  final VoidCallback onToggleScan;
+  final List<String> foundDevices;
+
+  const ScannerWidget({
+    super.key,
+    required this.isScanning,
+    required this.onToggleScan,
+    required this.foundDevices,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Scanning row
+        Row(
+          children: [
+            const Text('Scanning:'),
+            const Spacer(),
+            ElevatedButton(
+              onPressed: onToggleScan,
+              child: Text(isScanning ? 'Stop' : 'Start'),
+            ),
+          ],
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Found headsets
+        const Text('Found headsets:'),
+        
+        const SizedBox(height: 8),
+        
+        // Device list
+        ...foundDevices.map((device) => 
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            child: Text('• $device'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class ConnectionWidget extends StatelessWidget {
+  final String deviceName;
+  final VoidCallback onDisconnect;
+
+  const ConnectionWidget({
+    super.key,
+    required this.deviceName,
+    required this.onDisconnect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Connected row
+        Row(
+          children: [
+            const Text('Connected:'),
+            const Spacer(),
+            ElevatedButton(
+              onPressed: onDisconnect,
+              child: const Text('Disconnect'),
+            ),
+          ],
+        ),
+        
+        const SizedBox(height: 8),
+        
+        // Device name
+        Text(deviceName),
+      ],
+    );
+  }
+}
+
+class BluetoothControlWidget extends StatelessWidget {
+  final bool isConnected;
+  final bool isScanning;
+  final String connectedDeviceName;
+  final List<String> foundDevices;
+  final VoidCallback onToggleScan;
+  final VoidCallback onDisconnect;
+
+  const BluetoothControlWidget({
+    super.key,
+    required this.isConnected,
+    required this.isScanning,
+    required this.connectedDeviceName,
+    required this.foundDevices,
+    required this.onToggleScan,
+    required this.onDisconnect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return isConnected
+        ? ConnectionWidget(
+            deviceName: connectedDeviceName,
+            onDisconnect: onDisconnect,
+          )
+        : ScannerWidget(
+            isScanning: isScanning,
+            onToggleScan: onToggleScan,
+            foundDevices: foundDevices,
+          );
+  }
+}
+
 ///////////////////////////////////////////////////////////////////////////
 // Settings Screen
 class FileSettingsScreen extends StatefulWidget {
