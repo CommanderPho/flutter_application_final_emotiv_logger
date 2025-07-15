@@ -63,32 +63,33 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
 
   void _setupStreamListeners() {
 	// Add this listener for found devices
+	// Always listen for connection changes
+	_connectionSubscription = _bleManager.connectionStream.listen((connected) {
+		setState(() {
+			_isConnected = connected;
+		});
+	});
+
+	// Always listen for found devices
 	_bleManager.foundDevicesStream.listen((devices) {
 		setState(() {
 			_foundDevices = devices;
 		});
 	});
 
-	if (_useLSLStreams == true) {
-		// setup labstreaminglayer streams
-		_eegSubscription = _bleManager.eegDataStream.listen((data) {
+	_eegSubscription = _bleManager.eegDataStream.listen((data) {
 		setState(() {
 			_latestEEGData = data;
 		});
-		});
+	});
 
-		_statusSubscription = _bleManager.statusStream.listen((status) {
+	_statusSubscription = _bleManager.statusStream.listen((status) {
 		setState(() {
 			_statusMessage = status;
 		});
-		});
+	});
 
-		_connectionSubscription = _bleManager.connectionStream.listen((connected) {
-		setState(() {
-			_isConnected = connected;
-		});
-		});
-	}
+
 	
 
   }
