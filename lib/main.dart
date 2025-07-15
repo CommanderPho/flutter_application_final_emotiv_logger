@@ -278,36 +278,21 @@ void _updateConnectedDevice(String deviceName) {
 				),
 			  ),
 			),
-
+			
 			const SizedBox(height: 16),
-
-			// Control Buttons
-			Row(
-			  children: [
-				Expanded(
-				  child: ElevatedButton.icon(
-					onPressed: _isConnected ? null : _startScanning,
-					icon: const Icon(Icons.search),
-					label: Text(_bleManager.isScanning ? 'Scanning...' : 'Start Scan'),
-				  ),
-				),
-				const SizedBox(width: 8),
-				Expanded(
-				  child: ElevatedButton.icon(
-					onPressed: _isConnected ? _disconnect : _stopScanning,
-					icon: Icon(_isConnected ? Icons.bluetooth_disabled : Icons.stop),
-					label: Text(_isConnected ? 'Disconnect' : 'Stop Scan'),
-					style: ElevatedButton.styleFrom(
-					  backgroundColor: _isConnected ? Colors.red : null,
-					  foregroundColor: _isConnected ? Colors.white : null,
-					),
-				  ),
-				),
-			  ],
+			
+			// Replace your existing control buttons with this:
+			BluetoothControlWidget(
+			  isConnected: _isConnected,
+			  isScanning: _bleManager.isScanning,
+			  connectedDeviceName: _connectedDeviceName,
+			  foundDevices: _foundDevices,
+			  onToggleScan: _toggleScanning,
+			  onDisconnect: _disconnect,
 			),
-
+			
 			const SizedBox(height: 16),
-
+			
 			// EEG Data Display
 			Expanded(
 			  child: Card(
