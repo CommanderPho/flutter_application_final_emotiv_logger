@@ -45,257 +45,257 @@ class EmotivBLEManager {
 
   // Add method to set custom directory
   void setCustomSaveDirectory(String? directoryPath) {
-     print("EmotivBLEManager: Updating custom save directory directoryPath: ${directoryPath}");
-    _customSaveDirectory = directoryPath;
+	 print("EmotivBLEManager: Updating custom save directory directoryPath: ${directoryPath}");
+	_customSaveDirectory = directoryPath;
   }
 
   Future<void> _initializeFileWriter() async {
-    try {
-      // Dispose existing file writer if any
-      await _fileWriter?.dispose();
+	try {
+	  // Dispose existing file writer if any
+	  await _fileWriter?.dispose();
 
-      // Create new file writer with custom directory
-      _fileWriter = EEGFileWriter(
-        onStatusUpdate: _updateStatus,
-        customDirectoryPath: _customSaveDirectory, // Pass custom directory
-      );
+	  // Create new file writer with custom directory
+	  _fileWriter = EEGFileWriter(
+		onStatusUpdate: _updateStatus,
+		customDirectoryPath: _customSaveDirectory, // Pass custom directory
+	  );
 
-      // Initialize the file writer
-      final success = await _fileWriter!.initialize();
+	  // Initialize the file writer
+	  final success = await _fileWriter!.initialize();
 
-      if (!success) {
-        _updateStatus("EmotivBLEManager: Failed to initialize file writer");
-        _fileWriter = null;
-      }
+	  if (!success) {
+		_updateStatus("EmotivBLEManager: Failed to initialize file writer");
+		_fileWriter = null;
+	  }
 
-    } catch (e) {
-      _updateStatus("EmotivBLEManager: Error initializing file writer: $e");
-      _fileWriter = null;
-    }
+	} catch (e) {
+	  _updateStatus("EmotivBLEManager: Error initializing file writer: $e");
+	  _fileWriter = null;
+	}
   }
 
   Future<void> startScanning() async {
-    if (_isScanning) return;
+	if (_isScanning) return;
 
-    _isScanning = true;
-    _updateStatus("EmotivBLEManager: Starting scan for Emotiv devices...");
+	_isScanning = true;
+	_updateStatus("EmotivBLEManager: Starting scan for Emotiv devices...");
 
-    try {
-      // Start scanning for devices with the specific service UUID
-      await FlutterBluePlus.startScan(
-        withServices: [Guid(deviceNameUuid)],
-        timeout: const Duration(seconds: 30),
-      );
+	try {
+	  // Start scanning for devices with the specific service UUID
+	  await FlutterBluePlus.startScan(
+		withServices: [Guid(deviceNameUuid)],
+		timeout: const Duration(seconds: 30),
+	  );
 
-      // Listen for scan results
-      FlutterBluePlus.scanResults.listen((results) {
-        for (ScanResult result in results) {
-          _updateStatus("Found device: ${result.device.platformName}");
-          print("EmotivBLEManager: Found device: ${result.device.platformName} (${result.device.remoteId})");
+	  // Listen for scan results
+	  FlutterBluePlus.scanResults.listen((results) {
+		for (ScanResult result in results) {
+		  _updateStatus("Found device: ${result.device.platformName}");
+		  print("EmotivBLEManager: Found device: ${result.device.platformName} (${result.device.remoteId})");
 
-          // Connect to the first Emotiv device found
-          if (result.device.platformName.isNotEmpty) {
-            stopScanning();
-            connectToDevice(result.device);
-            break;
-          }
-        }
-      });
+		  // Connect to the first Emotiv device found
+		  if (result.device.platformName.isNotEmpty) {
+			stopScanning();
+			connectToDevice(result.device);
+			break;
+		  }
+		}
+	  });
 
-    } catch (e) {
-      _updateStatus("Error starting scan: $e");
-      _isScanning = false;
-    }
+	} catch (e) {
+	  _updateStatus("Error starting scan: $e");
+	  _isScanning = false;
+	}
   }
 
   Future<void> stopScanning() async {
-    if (!_isScanning) return;
+	if (!_isScanning) return;
 
-    await FlutterBluePlus.stopScan();
-    _isScanning = false;
-    _updateStatus("Stopped scanning");
+	await FlutterBluePlus.stopScan();
+	_isScanning = false;
+	_updateStatus("Stopped scanning");
   }
 
   Future<void> connectToDevice(BluetoothDevice device) async {
-    try {
-      _updateStatus("Connecting to ${device.platformName}...");
+	try {
+	  _updateStatus("Connecting to ${device.platformName}...");
 
-      await device.connect(timeout: const Duration(seconds: 15));
-      _emotivDevice = device;
-      _isConnected = true;
-      _connectionController.add(true);
+	  await device.connect(timeout: const Duration(seconds: 15));
+	  _emotivDevice = device;
+	  _isConnected = true;
+	  _connectionController.add(true);
 
-      _updateStatus("Connected to ${device.platformName}");
+	  _updateStatus("Connected to ${device.platformName}");
 
-      // Initialize file writer after successful connection
-      await _initializeFileWriter();
+	  // Initialize file writer after successful connection
+	  await _initializeFileWriter();
 
-      // Listen for disconnection
-      device.connectionState.listen((state) {
-        if (state == BluetoothConnectionState.disconnected) {
-          _handleDisconnection();
-        }
-      });
+	  // Listen for disconnection
+	  device.connectionState.listen((state) {
+		if (state == BluetoothConnectionState.disconnected) {
+		  _handleDisconnection();
+		}
+	  });
 
-      // Discover services
-      await _discoverServices();
+	  // Discover services
+	  await _discoverServices();
 
-    } catch (e) {
-      _updateStatus("Failed to connect: $e");
-      _isConnected = false;
-      _connectionController.add(false);
-    }
+	} catch (e) {
+	  _updateStatus("Failed to connect: $e");
+	  _isConnected = false;
+	  _connectionController.add(false);
+	}
   }
 
   Future<void> _discoverServices() async {
-    if (_emotivDevice == null) return;
+	if (_emotivDevice == null) return;
 
-    try {
-      _updateStatus("Discovering services...");
+	try {
+	  _updateStatus("Discovering services...");
 
-      List<BluetoothService> services = await _emotivDevice!.discoverServices();
+	  List<BluetoothService> services = await _emotivDevice!.discoverServices();
 
-      for (BluetoothService service in services) {
-        print("Discovered service: ${service.uuid}");
+	  for (BluetoothService service in services) {
+		print("Discovered service: ${service.uuid}");
 
-        for (BluetoothCharacteristic characteristic in service.characteristics) {
-          print("Discovered characteristic: ${characteristic.uuid}");
+		for (BluetoothCharacteristic characteristic in service.characteristics) {
+		  print("Discovered characteristic: ${characteristic.uuid}");
 
-          if (characteristic.uuid.toString().toUpperCase() == transferDataUuid.toUpperCase()) {
-            _dataCharacteristic = characteristic;
-            await _setupEEGDataCharacteristic(characteristic);
-          } else if (characteristic.uuid.toString().toUpperCase() == transferMemsUuid.toUpperCase()) {
-            _memsCharacteristic = characteristic;
-            await _setupMemsCharacteristic(characteristic);
-          }
-        }
-      }
+		  if (characteristic.uuid.toString().toUpperCase() == transferDataUuid.toUpperCase()) {
+			_dataCharacteristic = characteristic;
+			await _setupEEGDataCharacteristic(characteristic);
+		  } else if (characteristic.uuid.toString().toUpperCase() == transferMemsUuid.toUpperCase()) {
+			_memsCharacteristic = characteristic;
+			await _setupMemsCharacteristic(characteristic);
+		  }
+		}
+	  }
 
-      _updateStatus("Setup complete - receiving data");
+	  _updateStatus("Setup complete - receiving data");
 
-    } catch (e) {
-      _updateStatus("Error discovering services: $e");
-    }
+	} catch (e) {
+	  _updateStatus("Error discovering services: $e");
+	}
   }
 
   Future<void> _setupEEGDataCharacteristic(BluetoothCharacteristic characteristic) async {
-    try {
-      // Enable notifications
-      await characteristic.setNotifyValue(true);
+	try {
+	  // Enable notifications
+	  await characteristic.setNotifyValue(true);
 
-      // Listen for data
-      characteristic.lastValueStream.listen((data) {
-        if (data.isNotEmpty) {
-          _processEEGData(Uint8List.fromList(data));
-        }
-      });
+	  // Listen for data
+	  characteristic.lastValueStream.listen((data) {
+		if (data.isNotEmpty) {
+		  _processEEGData(Uint8List.fromList(data));
+		}
+	  });
 
-      // Write configuration data (equivalent to your Swift code)
-      if (characteristic.properties.write) {
-        final configData = Uint8List.fromList([0x01, 0x00]); // 0x0001 as little-endian
-        await characteristic.write(configData, withoutResponse: false);
-      }
+	  // Write configuration data (equivalent to your Swift code)
+	  if (characteristic.properties.write) {
+		final configData = Uint8List.fromList([0x01, 0x00]); // 0x0001 as little-endian
+		await characteristic.write(configData, withoutResponse: false);
+	  }
 
-      _updateStatus("Data characteristic configured");
+	  _updateStatus("Data characteristic configured");
 
-    } catch (e) {
-      _updateStatus("Error setting up data characteristic: $e");
-    }
+	} catch (e) {
+	  _updateStatus("Error setting up data characteristic: $e");
+	}
   }
 
   Future<void> _setupMemsCharacteristic(BluetoothCharacteristic characteristic) async {
-    try {
-      await characteristic.setNotifyValue(true);
+	try {
+	  await characteristic.setNotifyValue(true);
 
-      characteristic.lastValueStream.listen((data) {
-        if (data.isNotEmpty) {
-          _memsDataController.add(Uint8List.fromList(data));
-        }
-      });
+	  characteristic.lastValueStream.listen((data) {
+		if (data.isNotEmpty) {
+		  _memsDataController.add(Uint8List.fromList(data));
+		}
+	  });
 
-      _updateStatus("MEMS characteristic configured");
+	  _updateStatus("MEMS characteristic configured");
 
-    } catch (e) {
-      _updateStatus("Error setting up MEMS characteristic: $e");
-    }
+	} catch (e) {
+	  _updateStatus("Error setting up MEMS characteristic: $e");
+	}
   }
 
 
   void _processEEGData(Uint8List data) {
-    if (!_validateData(data)) return;
+	if (!_validateData(data)) return;
 
-    // Decrypt and decode the data
-    final decodedValues = CryptoUtils.decryptToDoubleList(data);
+	// Decrypt and decode the data
+	final decodedValues = CryptoUtils.decryptToDoubleList(data);
 
-    if (decodedValues.isNotEmpty) {
-      _eegDataController.add(decodedValues);
-      print("EEG Data: ${decodedValues.take(5).join(', ')}..."); // Print first 5 values
+	if (decodedValues.isNotEmpty) {
+	  _eegDataController.add(decodedValues);
+	  print("EEG Data: ${decodedValues.take(5).join(', ')}..."); // Print first 5 values
 
-      // Write to file using the file writer
-      _fileWriter?.writeEEGData(decodedValues);
-    }
+	  // Write to file using the file writer
+	  _fileWriter?.writeEEGData(decodedValues);
+	}
   }
 
   bool _validateData(Uint8List data) {
-    if (data.length < readSize) {
-      print("EmotivBLEManager: Data size too small: ${data.length}");
-      return false;
-    }
-    return true;
+	if (data.length < readSize) {
+	  print("EmotivBLEManager: Data size too small: ${data.length}");
+	  return false;
+	}
+	return true;
   }
 
   void _handleDisconnection() {
-    _isConnected = false;
-    _emotivDevice = null;
-    _dataCharacteristic = null;
-    _memsCharacteristic = null;
-    _connectionController.add(false);
-    _updateStatus("Disconnected - closing file and restarting scan...");
+	_isConnected = false;
+	_emotivDevice = null;
+	_dataCharacteristic = null;
+	_memsCharacteristic = null;
+	_connectionController.add(false);
+	_updateStatus("Disconnected - closing file and restarting scan...");
 
-    // Close file writer immediately to prevent timer conflicts
-    _closeFileWriter();
+	// Close file writer immediately to prevent timer conflicts
+	_closeFileWriter();
 
-    // // Optionally restart scanning
-    // Future.delayed(const Duration(seconds: 2), () {
-    //   if (!_isConnected) { // Only restart if still disconnected
-    //     startScanning();
-    //   }
-    // });
+	// // Optionally restart scanning
+	// Future.delayed(const Duration(seconds: 2), () {
+	//   if (!_isConnected) { // Only restart if still disconnected
+	//     startScanning();
+	//   }
+	// });
 
   }
 
   Future<void> _closeFileWriter() async {
-    if (_fileWriter != null) {
-      await _fileWriter!.dispose();
-      _fileWriter = null;
-    }
+	if (_fileWriter != null) {
+	  await _fileWriter!.dispose();
+	  _fileWriter = null;
+	}
   }
 
   void _updateStatus(String status) {
-    print(status);
-    _statusController.add(status);
+	print(status);
+	_statusController.add(status);
   }
 
   Future<void> disconnect() async {
-    if (_emotivDevice != null && _isConnected) {
-      await _emotivDevice!.disconnect();
-    }
-    else {
-      await _closeFileWriter();
-    }
+	if (_emotivDevice != null && _isConnected) {
+	  await _emotivDevice!.disconnect();
+	}
+	else {
+	  await _closeFileWriter();
+	}
   }
 
   void dispose() {
-    _closeFileWriter();
-    _eegDataController.close();
-    _memsDataController.close();
-    _connectionController.close();
-    _statusController.close();
+	_closeFileWriter();
+	_eegDataController.close();
+	_memsDataController.close();
+	_connectionController.close();
+	_statusController.close();
   }
 
   // Utility method to get current file info
   Future<Map<String, dynamic>?> getFileInfo() async {
-    return await _fileWriter?.getFileInfo();
+	return await _fileWriter?.getFileInfo();
   }
 
   // Additional utility methods for file writer
@@ -305,7 +305,7 @@ class EmotivBLEManager {
 
   // Force flush any buffered data
   void flushFileBuffer() {
-    _fileWriter?.flush();
+	_fileWriter?.flush();
   }
 
 }

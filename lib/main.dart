@@ -17,14 +17,14 @@ class EmotivBLEApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-        return MaterialApp(
-          title: 'Emotiv BLE LSL Logger',
-          theme: ThemeData(
-                primarySwatch: Colors.blue,
-                useMaterial3: true,
-          ),
-          home: EmotivHomePage(storage: FileStorage.new(),),
-        );
+	return MaterialApp(
+	  title: 'Emotiv BLE LSL Logger',
+	  theme: ThemeData(
+		primarySwatch: Colors.blue,
+		useMaterial3: true,
+	  ),
+	  home: EmotivHomePage(storage: FileStorage.new(),),
+	);
   }
 }
 
@@ -52,38 +52,38 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
 
   @override
   void initState() {
-        super.initState();
-        _initializeBluetooth();
-        if (_useLSLStreams == true) {
-          _setupStreamListeners();
-        }
-        // // File storage setup
-        // widget.storage.readCounter().then((value) {
-        //   setState(() {
-        //     _counter = value;
-        //   });
-        // });
+	super.initState();
+	_initializeBluetooth();
+	if (_useLSLStreams == true) {
+	  _setupStreamListeners();
+	}
+	// // File storage setup
+	// widget.storage.readCounter().then((value) {
+	//   setState(() {
+	//     _counter = value;
+	//   });
+	// });
   }
 
   void _setupStreamListeners() {
-        // setup labstreaminglayer streams
-        _eegSubscription = _bleManager.eegDataStream.listen((data) {
-          setState(() {
-                _latestEEGData = data;
-          });
-        });
+	// setup labstreaminglayer streams
+	_eegSubscription = _bleManager.eegDataStream.listen((data) {
+	  setState(() {
+		_latestEEGData = data;
+	  });
+	});
 
-        _statusSubscription = _bleManager.statusStream.listen((status) {
-          setState(() {
-                _statusMessage = status;
-          });
-        });
+	_statusSubscription = _bleManager.statusStream.listen((status) {
+	  setState(() {
+		_statusMessage = status;
+	  });
+	});
 
-        _connectionSubscription = _bleManager.connectionStream.listen((connected) {
-          setState(() {
-                _isConnected = connected;
-          });
-        });
+	_connectionSubscription = _bleManager.connectionStream.listen((connected) {
+	  setState(() {
+		_isConnected = connected;
+	  });
+	});
   }
 
   // Future<File> _incrementCounter() {
@@ -96,264 +96,264 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
   // }
 
   Future<void> _initializeBluetooth() async {
-        // Request permissions
-        await _requestPermissions();
+	// Request permissions
+	await _requestPermissions();
 
-        // Check if Bluetooth is available
-        if (await FlutterBluePlus.isAvailable == false) {
-          setState(() {
-                _statusMessage = "Bluetooth not available";
-          });
-          return;
-        }
+	// Check if Bluetooth is available
+	if (await FlutterBluePlus.isAvailable == false) {
+	  setState(() {
+		_statusMessage = "Bluetooth not available";
+	  });
+	  return;
+	}
 
-        // Check Bluetooth state
-        FlutterBluePlus.adapterState.listen((state) {
-          if (state == BluetoothAdapterState.on) {
-                setState(() {
-                  _statusMessage = "Bluetooth ready";
-                });
-          } else {
-                setState(() {
-                  _statusMessage = "Please enable Bluetooth";
-                });
-          }
-        });
+	// Check Bluetooth state
+	FlutterBluePlus.adapterState.listen((state) {
+	  if (state == BluetoothAdapterState.on) {
+		setState(() {
+		  _statusMessage = "Bluetooth ready";
+		});
+	  } else {
+		setState(() {
+		  _statusMessage = "Please enable Bluetooth";
+		});
+	  }
+	});
   }
 
   Future<void> _requestPermissions() async {
-        Map<Permission, PermissionStatus> permissions = await [
-          Permission.bluetoothScan,
-          Permission.bluetoothConnect,
-          Permission.bluetoothAdvertise,
-          Permission.location,
-          Permission.manageExternalStorage,
-          Permission.storage,
-        ].request();
+	Map<Permission, PermissionStatus> permissions = await [
+	  Permission.bluetoothScan,
+	  Permission.bluetoothConnect,
+	  Permission.bluetoothAdvertise,
+	  Permission.location,
+	  Permission.manageExternalStorage,
+	  Permission.storage,
+	].request();
 
-        bool allGranted = permissions.values.every((status) => status.isGranted);
-        if (!allGranted) {
-          setState(() {
-                _statusMessage = "Bluetooth permissions required";
-          });
-        }
+	bool allGranted = permissions.values.every((status) => status.isGranted);
+	if (!allGranted) {
+	  setState(() {
+		_statusMessage = "Bluetooth permissions required";
+	  });
+	}
   }
 
   Future<void> _startScanning() async {
-        await _bleManager.startScanning();
+	await _bleManager.startScanning();
   }
 
   Future<void> _stopScanning() async {
-        await _bleManager.stopScanning();
+	await _bleManager.stopScanning();
   }
 
   Future<void> _disconnect() async {
-        await _bleManager.disconnect();
+	await _bleManager.disconnect();
   }
 
   @override
   void dispose() {
-        _eegSubscription.cancel();
-        _statusSubscription.cancel();
-        _connectionSubscription.cancel();
-        _bleManager.dispose();
-        super.dispose();
+	_eegSubscription.cancel();
+	_statusSubscription.cancel();
+	_connectionSubscription.cancel();
+	_bleManager.dispose();
+	super.dispose();
   }
 
   // Add this method to navigate to settings
   Future<void> _openFileSettings() async {
-        final result = await Navigator.push(
-          context,
-          MaterialPageRoute(
-                builder: (context) => FileSettingsScreen(
-                  _selectedDirectory,
-                ),
-          ),
-        );
+	final result = await Navigator.push(
+	  context,
+	  MaterialPageRoute(
+		builder: (context) => FileSettingsScreen(
+		  _selectedDirectory,
+		),
+	  ),
+	);
 
-        // Handle the result if the user selected a new directory
-        if (result != null && result is String) {
-          setState(() {
-                 print("File settings return context result: ${result}");
-                _selectedDirectory = result;
-          });
+	// Handle the result if the user selected a new directory
+	if (result != null && result is String) {
+	  setState(() {
+		 print("File settings return context result: ${result}");
+		_selectedDirectory = result;
+	  });
 
-          // Apply the new directory to your BLE manager
-          _bleManager.setCustomSaveDirectory(_selectedDirectory);
+	  // Apply the new directory to your BLE manager
+	  _bleManager.setCustomSaveDirectory(_selectedDirectory);
 
-          // Show confirmation
-          ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Save directory updated: $_selectedDirectory'),
-                ),
-          );
-        }
+	  // Show confirmation
+	  ScaffoldMessenger.of(context).showSnackBar(
+		SnackBar(
+		  content: Text('Save directory updated: $_selectedDirectory'),
+		),
+	  );
+	}
   }
 
   @override
   Widget build(BuildContext context) {
-        return Scaffold(
-          appBar: AppBar(
-                title: const Text('Emotiv BLE LSL Logger'),
-                backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-                actions: [
-                  // Add settings button to app bar
-                  IconButton(
-                        icon: const Icon(Icons.settings),
-                        onPressed: () => _openFileSettings(),
-                  ),
-                ],
-          ),
-          body: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                        // Status Card
-                        Card(
-                          child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                        Text(
-                                          'Device Status',
-                                          style: Theme.of(context).textTheme.titleMedium,
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Row(
-                                          children: [
-                                                Icon(
-                                                  _isConnected ? Icons.bluetooth_connected : Icons.bluetooth_disabled,
-                                                  color: _isConnected ? Colors.green : Colors.red,
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Expanded(
-                                                  child: Text(
-                                                        _statusMessage,
-                                                        style: TextStyle(
-                                                          color: _isConnected ? Colors.green : Colors.black87,
-                                                        ),
-                                                  ),
-                                                ),
-                                          ],
-                                        ),
-                                  ],
-                                ),
-                          ),
-                        ),
+	return Scaffold(
+	  appBar: AppBar(
+		title: const Text('Emotiv BLE LSL Logger'),
+		backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+		actions: [
+		  // Add settings button to app bar
+		  IconButton(
+			icon: const Icon(Icons.settings),
+			onPressed: () => _openFileSettings(),
+		  ),
+		],
+	  ),
+	  body: Padding(
+		padding: const EdgeInsets.all(16.0),
+		child: Column(
+		  crossAxisAlignment: CrossAxisAlignment.stretch,
+		  children: [
+			// Status Card
+			Card(
+			  child: Padding(
+				padding: const EdgeInsets.all(16.0),
+				child: Column(
+				  crossAxisAlignment: CrossAxisAlignment.start,
+				  children: [
+					Text(
+					  'Device Status',
+					  style: Theme.of(context).textTheme.titleMedium,
+					),
+					const SizedBox(height: 8),
+					Row(
+					  children: [
+						Icon(
+						  _isConnected ? Icons.bluetooth_connected : Icons.bluetooth_disabled,
+						  color: _isConnected ? Colors.green : Colors.red,
+						),
+						const SizedBox(width: 8),
+						Expanded(
+						  child: Text(
+							_statusMessage,
+							style: TextStyle(
+							  color: _isConnected ? Colors.green : Colors.black87,
+							),
+						  ),
+						),
+					  ],
+					),
+				  ],
+				),
+			  ),
+			),
 
-                        const SizedBox(height: 16),
+			const SizedBox(height: 16),
 
-                        // Control Buttons
-                        Row(
-                          children: [
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                        onPressed: _isConnected ? null : _startScanning,
-                                        icon: const Icon(Icons.search),
-                                        label: Text(_bleManager.isScanning ? 'Scanning...' : 'Start Scan'),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                        onPressed: _isConnected ? _disconnect : _stopScanning,
-                                        icon: Icon(_isConnected ? Icons.bluetooth_disabled : Icons.stop),
-                                        label: Text(_isConnected ? 'Disconnect' : 'Stop Scan'),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: _isConnected ? Colors.red : null,
-                                          foregroundColor: _isConnected ? Colors.white : null,
-                                        ),
-                                  ),
-                                ),
-                          ],
-                        ),
+			// Control Buttons
+			Row(
+			  children: [
+				Expanded(
+				  child: ElevatedButton.icon(
+					onPressed: _isConnected ? null : _startScanning,
+					icon: const Icon(Icons.search),
+					label: Text(_bleManager.isScanning ? 'Scanning...' : 'Start Scan'),
+				  ),
+				),
+				const SizedBox(width: 8),
+				Expanded(
+				  child: ElevatedButton.icon(
+					onPressed: _isConnected ? _disconnect : _stopScanning,
+					icon: Icon(_isConnected ? Icons.bluetooth_disabled : Icons.stop),
+					label: Text(_isConnected ? 'Disconnect' : 'Stop Scan'),
+					style: ElevatedButton.styleFrom(
+					  backgroundColor: _isConnected ? Colors.red : null,
+					  foregroundColor: _isConnected ? Colors.white : null,
+					),
+				  ),
+				),
+			  ],
+			),
 
-                        const SizedBox(height: 16),
+			const SizedBox(height: 16),
 
-                        // EEG Data Display
-                        Expanded(
-                          child: Card(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                                'EEG Data Stream',
-                                                style: Theme.of(context).textTheme.titleMedium,
-                                          ),
-                                          const SizedBox(height: 8),
-                                          if (_latestEEGData.isEmpty)
-                                                const Expanded(
-                                                  child: Center(
-                                                        child: Text(
-                                                          'No data received yet...\nConnect to Emotiv device to see EEG data',
-                                                          textAlign: TextAlign.center,
-                                                          style: TextStyle(color: Colors.grey),
-                                                        ),
-                                                  ),
-                                                )
-                                          else
-                                                Expanded(
-                                                  child: SingleChildScrollView(
-                                                        child: Column(
-                                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                                          children: [
-                                                                Text(
-                                                                  'Latest Sample (${_latestEEGData.length} channels):',
-                                                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                                                ),
-                                                                const SizedBox(height: 8),
-                                                                ...List.generate(_latestEEGData.length, (index) {
-                                                                  return Padding(
-                                                                        padding: const EdgeInsets.symmetric(vertical: 2.0),
-                                                                        child: Row(
-                                                                          children: [
-                                                                                SizedBox(
-                                                                                  width: 80,
-                                                                                  child: Text(
-                                                                                        'CH${index + 1}:',
-                                                                                        style: const TextStyle(fontWeight: FontWeight.w500),
-                                                                                  ),
-                                                                                ),
-                                                                                Expanded(
-                                                                                  child: Container(
-                                                                                        padding: const EdgeInsets.symmetric(
-                                                                                          horizontal: 8,
-                                                                                          vertical: 4
-                                                                                        ),
-                                                                                        decoration: BoxDecoration(
-                                                                                          color: Colors.grey[100],
-                                                                                          borderRadius: BorderRadius.circular(4),
-                                                                                        ),
-                                                                                        child: Text(
-                                                                                          _latestEEGData[index].toStringAsFixed(6),
-                                                                                          style: const TextStyle(
-                                                                                                fontFamily: 'monospace',
-                                                                                                fontSize: 12,
-                                                                                          ),
-                                                                                        ),
-                                                                                  ),
-                                                                                ),
-                                                                          ],
-                                                                        ),
-                                                                  );
-                                                                }),
-                                                          ],
-                                                        ),
-                                                  ),
-                                                ),
-                                        ],
-                                  ),
-                                ),
-                          ),
-                        ),
-                  ],
-                ),
-          ),
-        );
+			// EEG Data Display
+			Expanded(
+			  child: Card(
+				child: Padding(
+				  padding: const EdgeInsets.all(16.0),
+				  child: Column(
+					crossAxisAlignment: CrossAxisAlignment.start,
+					children: [
+					  Text(
+						'EEG Data Stream',
+						style: Theme.of(context).textTheme.titleMedium,
+					  ),
+					  const SizedBox(height: 8),
+					  if (_latestEEGData.isEmpty)
+						const Expanded(
+						  child: Center(
+							child: Text(
+							  'No data received yet...\nConnect to Emotiv device to see EEG data',
+							  textAlign: TextAlign.center,
+							  style: TextStyle(color: Colors.grey),
+							),
+						  ),
+						)
+					  else
+						Expanded(
+						  child: SingleChildScrollView(
+							child: Column(
+							  crossAxisAlignment: CrossAxisAlignment.start,
+							  children: [
+								Text(
+								  'Latest Sample (${_latestEEGData.length} channels):',
+								  style: const TextStyle(fontWeight: FontWeight.bold),
+								),
+								const SizedBox(height: 8),
+								...List.generate(_latestEEGData.length, (index) {
+								  return Padding(
+									padding: const EdgeInsets.symmetric(vertical: 2.0),
+									child: Row(
+									  children: [
+										SizedBox(
+										  width: 80,
+										  child: Text(
+											'CH${index + 1}:',
+											style: const TextStyle(fontWeight: FontWeight.w500),
+										  ),
+										),
+										Expanded(
+										  child: Container(
+											padding: const EdgeInsets.symmetric(
+											  horizontal: 8,
+											  vertical: 4
+											),
+											decoration: BoxDecoration(
+											  color: Colors.grey[100],
+											  borderRadius: BorderRadius.circular(4),
+											),
+											child: Text(
+											  _latestEEGData[index].toStringAsFixed(6),
+											  style: const TextStyle(
+												fontFamily: 'monospace',
+												fontSize: 12,
+											  ),
+											),
+										  ),
+										),
+									  ],
+									),
+								  );
+								}),
+							  ],
+							),
+						  ),
+						),
+					],
+				  ),
+				),
+			  ),
+			),
+		  ],
+		),
+	  ),
+	);
   }
 }
 
@@ -379,32 +379,32 @@ class ScannerWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Scanning row
-        Row(
-          children: [
-            const Text('Scanning:'),
-            const Spacer(),
-            ElevatedButton(
-              onPressed: onToggleScan,
-              child: Text(isScanning ? 'Stop' : 'Start'),
-            ),
-          ],
-        ),
+	// Scanning row
+	Row(
+	  children: [
+	    const Text('Scanning:'),
+	    const Spacer(),
+	    ElevatedButton(
+	      onPressed: onToggleScan,
+	      child: Text(isScanning ? 'Stop' : 'Start'),
+	    ),
+	  ],
+	),
 
-        const SizedBox(height: 16),
+	const SizedBox(height: 16),
 
-        // Found headsets
-        const Text('Found headsets:'),
+	// Found headsets
+	const Text('Found headsets:'),
 
-        const SizedBox(height: 8),
+	const SizedBox(height: 8),
 
-        // Device list
-        ...foundDevices.map((device) =>
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
-            child: Text('• $device'),
-          ),
-        ),
+	// Device list
+	...foundDevices.map((device) =>
+	  Padding(
+	    padding: const EdgeInsets.symmetric(vertical: 4.0),
+	    child: Text('• $device'),
+	  ),
+	),
       ],
     );
   }
@@ -425,22 +425,22 @@ class ConnectionWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Connected row
-        Row(
-          children: [
-            const Text('Connected:'),
-            const Spacer(),
-            ElevatedButton(
-              onPressed: onDisconnect,
-              child: const Text('Disconnect'),
-            ),
-          ],
-        ),
+	// Connected row
+	Row(
+	  children: [
+	    const Text('Connected:'),
+	    const Spacer(),
+	    ElevatedButton(
+	      onPressed: onDisconnect,
+	      child: const Text('Disconnect'),
+	    ),
+	  ],
+	),
 
-        const SizedBox(height: 8),
+	const SizedBox(height: 8),
 
-        // Device name
-        Text(deviceName),
+	// Device name
+	Text(deviceName),
       ],
     );
   }
@@ -467,15 +467,15 @@ class BluetoothControlWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return isConnected
-        ? ConnectionWidget(
-            deviceName: connectedDeviceName,
-            onDisconnect: onDisconnect,
-          )
-        : ScannerWidget(
-            isScanning: isScanning,
-            onToggleScan: onToggleScan,
-            foundDevices: foundDevices,
-          );
+	? ConnectionWidget(
+	    deviceName: connectedDeviceName,
+	    onDisconnect: onDisconnect,
+	  )
+	: ScannerWidget(
+	    isScanning: isScanning,
+	    onToggleScan: onToggleScan,
+	    foundDevices: foundDevices,
+	  );
   }
 }
 
@@ -493,99 +493,99 @@ class _FileSettingsScreenState extends State<FileSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-        return Scaffold(
-          appBar: AppBar(title: Text('File Settings')),
-          body: Column(
-                children: [
-                  ListTile(
-                        title: Text('Save Directory'),
-                        subtitle: Text(_selectedDirectory ?? 'Default (App Documents)'),
-                        trailing: Icon(Icons.folder),
-                        onTap: () => _selectDirectory(context),
-                  ),
-                  ElevatedButton(
-                        onPressed: () => _applySettings(context),
-                        child: Text('Apply Settings'),
-                  ),
-                ],
-          ),
-        );
+	return Scaffold(
+	  appBar: AppBar(title: Text('File Settings')),
+	  body: Column(
+		children: [
+		  ListTile(
+			title: Text('Save Directory'),
+			subtitle: Text(_selectedDirectory ?? 'Default (App Documents)'),
+			trailing: Icon(Icons.folder),
+			onTap: () => _selectDirectory(context),
+		  ),
+		  ElevatedButton(
+			onPressed: () => _applySettings(context),
+			child: Text('Apply Settings'),
+		  ),
+		],
+	  ),
+	);
   }
 
   Future<void> _selectDirectory(BuildContext context) async {
   try {
-        // First check if we already have permission
-        final hasPermission = await DirectoryHelper.hasStoragePermission();
+	// First check if we already have permission
+	final hasPermission = await DirectoryHelper.hasStoragePermission();
 
-        if (!hasPermission) {
-          // Show dialog explaining why we need permission
-          final shouldRequest = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Storage Permission Required'),
-                  content: const Text(
-                        'This app needs storage permission to save EEG data files to your chosen directory. '
-                        'Please grant storage permission in the next dialog.',
-                  ),
-                  actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Grant Permission'),
-                        ),
-                  ],
-                ),
-          );
+	if (!hasPermission) {
+	  // Show dialog explaining why we need permission
+	  final shouldRequest = await showDialog<bool>(
+		context: context,
+		builder: (context) => AlertDialog(
+		  title: const Text('Storage Permission Required'),
+		  content: const Text(
+			'This app needs storage permission to save EEG data files to your chosen directory. '
+			'Please grant storage permission in the next dialog.',
+		  ),
+		  actions: [
+			TextButton(
+			  onPressed: () => Navigator.pop(context, false),
+			  child: const Text('Cancel'),
+			),
+			TextButton(
+			  onPressed: () => Navigator.pop(context, true),
+			  child: const Text('Grant Permission'),
+			),
+		  ],
+		),
+	  );
 
-          if (shouldRequest != true) return;
+	  if (shouldRequest != true) return;
 
-          // Request permission
-          final granted = await DirectoryHelper.requestStoragePermission();
-          if (!granted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                        content: Text('Storage permission is required to select save directory'),
-                        action: SnackBarAction(
-                          label: 'Settings',
-                          onPressed: openAppSettings,
-                        ),
-                  ),
-                );
-                return;
-          }
-        }
+	  // Request permission
+	  final granted = await DirectoryHelper.requestStoragePermission();
+	  if (!granted) {
+		ScaffoldMessenger.of(context).showSnackBar(
+		  const SnackBar(
+			content: Text('Storage permission is required to select save directory'),
+			action: SnackBarAction(
+			  label: 'Settings',
+			  onPressed: openAppSettings,
+			),
+		  ),
+		);
+		return;
+	  }
+	}
 
-        // Permission granted, now select directory
-        final selectedDir = await DirectoryHelper.selectDirectory();
-        if (selectedDir != null) {
-          setState(() {
-                _selectedDirectory = selectedDir;
-          });
+	// Permission granted, now select directory
+	final selectedDir = await DirectoryHelper.selectDirectory();
+	if (selectedDir != null) {
+	  setState(() {
+		_selectedDirectory = selectedDir;
+	  });
 
-          ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Directory selected: ${selectedDir.split('/').last}'),
-                ),
-          );
-        }
+	  ScaffoldMessenger.of(context).showSnackBar(
+		SnackBar(
+		  content: Text('Directory selected: ${selectedDir.split('/').last}'),
+		),
+	  );
+	}
 
   } catch (e) {
-        print("Error in _selectDirectory: $e");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-                content: Text('Error selecting directory: $e'),
-          ),
-        );
+	print("Error in _selectDirectory: $e");
+	ScaffoldMessenger.of(context).showSnackBar(
+	  SnackBar(
+		content: Text('Error selecting directory: $e'),
+	  ),
+	);
   }
 }
 
   Future<void> _applySettings(BuildContext context) async {
-        // Apply to your BLE manager
-        // emotivBLEManager.setCustomSaveDirectory(_selectedDirectory);
-        Navigator.pop(context, _selectedDirectory);
+	// Apply to your BLE manager
+	// emotivBLEManager.setCustomSaveDirectory(_selectedDirectory);
+	Navigator.pop(context, _selectedDirectory);
 
   }
 }
