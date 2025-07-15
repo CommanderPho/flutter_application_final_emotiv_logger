@@ -89,9 +89,6 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
 		});
 	});
 
-
-	
-
   }
 
 
@@ -375,7 +372,7 @@ Future<void> _connectToDeviceByName(String deviceName) async {
 
 ///////////////////////////////////////////////////////////////////////////
 // EEG Connections Widget
-class ScannerWidget extends StatelessWidget {
+class ScannerWidget extends StatelessWidget { // Displays the result of scanning for bluetooth devices and discovered devices
   final bool isScanning;
   final VoidCallback onToggleScan;
   final List<String> foundDevices;
@@ -435,7 +432,7 @@ class ScannerWidget extends StatelessWidget {
   }
 }
 
-class ConnectionWidget extends StatelessWidget {
+class ConnectionWidget extends StatelessWidget { // Displays the name of the connected device and a disconnect button
   final String deviceName;
   final VoidCallback onDisconnect;
 
@@ -471,7 +468,7 @@ class ConnectionWidget extends StatelessWidget {
   }
 }
 
-class BluetoothControlWidget extends StatelessWidget {
+class BluetoothControlWidget extends StatelessWidget { // Wraps the scanner and connection widgets based on scanning state and displays them based on the connection state
   final bool isConnected;
   final bool isScanning;
   final String connectedDeviceName;
