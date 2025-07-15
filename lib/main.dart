@@ -50,6 +50,10 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
   // Add this field to store the selected directory
   String? _selectedDirectory; // "/storage/emulated/0/DATA/EEG"
 
+  // Add these new state variables
+  List<String> _foundDevices = [];
+  String _connectedDeviceName = '';
+
   @override
   void initState() {
 	super.initState();
@@ -84,6 +88,15 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
 		_isConnected = connected;
 	  });
 	});
+
+	// Add this listener for found devices
+	_bleManager.foundDevicesStream.listen((devices) {
+		setState(() {
+			_foundDevices = devices;
+		});
+	});
+	
+
   }
 
   // Future<File> _incrementCounter() {
