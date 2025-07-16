@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_final_emotiv_logger/background_service.dart';
 import 'package:flutter_application_final_emotiv_logger/directory_helper.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -53,12 +53,17 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
   // Add these new state variables
   List<String> _foundDevices = [];
   String _connectedDeviceName = '';
+  
+  // Add background service state
+  bool _isBackgroundServiceRunning = false;
+  bool _useBackgroundService = false;
 
   @override
   void initState() {
 	super.initState();
 	_initializeBluetooth();
 	_setupStreamListeners();
+	_requestBatteryOptimization();
   }
 
   void _setupStreamListeners() {
@@ -88,10 +93,7 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
 			_statusMessage = status;
 		});
 	});
-
   }
-
-
 
   Future<void> _initializeBluetooth() async {
 	// Request permissions
@@ -137,16 +139,40 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
 	}
   }
 
+  // Add this method to request battery optimization exemption
+  Future<void> _requestBatteryOptimization() async {
+	try {
+	  await BatteryOptimization.requestBatteryOptimizationExemption();
+	} catch (e) {
+	  print('Battery optimization request failed: $e');
+	}
+  }
+
   Future<void> _startScanning() async {
-	await _bleManager.startScanning();
+	if (_useBackgroundService && _isBackgroundServiceRunning) {
+	  // Use background service
+	  await BackgroundService.startScanning();
+	} else {
+	  // Use foreground service
+	  await _bleManager.startScanning();
+	}
   }
 
   Future<void> _stopScanning() async {
-	await _bleManager.stopScanning();
+	if (_useBackgroundService && _isBackgroundServiceRunning) {
+	  // Background service handles this differently
+	  // You might want to add a stopScanning method to BackgroundService
+	} else {
+	  await _bleManager.stopScanning();
+	}
   }
 
   Future<void> _disconnect() async {
-	await _bleManager.disconnect();
+	if (_useBackgroundService && _isBackgroundServiceRunning) {
+	  await BackgroundService.disconnect();
+	} else {
+	  await _bleManager.disconnect();
+	}
   }
 
 Future<void> _toggleScanning() async {
@@ -160,20 +186,72 @@ Future<void> _toggleScanning() async {
 // Add this method to your _EmotivHomePageState class
 Future<void> _connectToDeviceByName(String deviceName) async {
   try {
-    await _bleManager.connectToDeviceByName(deviceName);
-    // Update connected device name on successful connection
-    setState(() {
-      _connectedDeviceName = deviceName;
-    });
+	if (_useBackgroundService && _isBackgroundServiceRunning) {
+	  await BackgroundService.connectToDevice(deviceName);
+	} else {
+	  await _bleManager.connectToDeviceByName(deviceName);
+	}
+	
+	// Update connected device name on successful connection
+	setState(() {
+	  _connectedDeviceName = deviceName;
+	});
   } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Failed to connect to $deviceName: $e'),
-        backgroundColor: Colors.red,
-      ),
-    );
+	ScaffoldMessenger.of(context).showSnackBar(
+	  SnackBar(
+		content: Text('Failed to connect to $deviceName: $e'),
+		backgroundColor: Colors.red,
+	  ),
+	);
   }
 }
+
+  // Add background service control methods
+  Future<void> _startBackgroundService() async {
+	try {
+	  await BackgroundService.startBackgroundCollection();
+	  setState(() {
+		_isBackgroundServiceRunning = true;
+	  });
+	  
+	  ScaffoldMessenger.of(context).showSnackBar(
+		const SnackBar(
+		  content: Text('Background service started'),
+		  backgroundColor: Colors.green,
+		),
+	  );
+	} catch (e) {
+	  ScaffoldMessenger.of(context).showSnackBar(
+		SnackBar(
+		  content: Text('Failed to start background service: $e'),
+		  backgroundColor: Colors.red,
+		),
+	  );
+	}
+  }
+
+  Future<void> _stopBackgroundService() async {
+	try {
+	  await BackgroundService.stopBackgroundCollection();
+	  setState(() {
+		_isBackgroundServiceRunning = false;
+	  });
+	  
+	  ScaffoldMessenger.of(context).showSnackBar(
+		const SnackBar(
+		  content: Text('Background service stopped'),
+		  backgroundColor: Colors.orange,
+		),
+	  );
+	} catch (e) {
+	  ScaffoldMessenger.of(context).showSnackBar(
+		SnackBar(
+		  content: Text('Failed to stop background service: $e'),
+		  backgroundColor: Colors.red,
+		),
+	  );
+	}
+  }
 
   @override
   void dispose() {
@@ -265,6 +343,21 @@ Future<void> _connectToDeviceByName(String deviceName) async {
 				  ],
 				),
 			  ),
+			),
+			
+			const SizedBox(height: 16),
+			
+			// Add Background Service Controls
+			BackgroundServiceControlWidget(
+			  isBackgroundServiceRunning: _isBackgroundServiceRunning,
+			  useBackgroundService: _useBackgroundService,
+			  onToggleBackgroundService: (value) {
+				setState(() {
+				  _useBackgroundService = value;
+				});
+			  },
+			  onStartBackgroundService: _startBackgroundService,
+			  onStopBackgroundService: _stopBackgroundService,
 			),
 			
 			const SizedBox(height: 16),
@@ -367,8 +460,104 @@ Future<void> _connectToDeviceByName(String deviceName) async {
   }
 }
 
+// Add this new widget for background service controls
+class BackgroundServiceControlWidget extends StatelessWidget {
+	final bool isBackgroundServiceRunning;
+	final bool useBackgroundService;
+	final Function(bool) onToggleBackgroundService;
+	final VoidCallback onStartBackgroundService;
+	final VoidCallback onStopBackgroundService;
 
+	const BackgroundServiceControlWidget({
+		super.key,
+		required this.isBackgroundServiceRunning,
+		required this.useBackgroundService,
+		required this.onToggleBackgroundService,
+		required this.onStartBackgroundService,
+		required this.onStopBackgroundService,
+	});
 
+	@override
+	Widget build(BuildContext context) {
+		return Card(
+			child: Padding(
+				padding: const EdgeInsets.all(16.0),
+				child: Column(
+					crossAxisAlignment: CrossAxisAlignment.start,
+					children: [
+						Text(
+							'Background Service',
+							style: Theme.of(context).textTheme.titleMedium,
+						),
+						const SizedBox(height: 8),
+
+						// Toggle for using background service
+						SwitchListTile(
+							title: const Text('Use Background Service'),
+							subtitle: const Text('Continues data collection when app is minimized'),
+							value: useBackgroundService,
+							onChanged: onToggleBackgroundService,
+						),
+
+						if (useBackgroundService) ...[
+							const SizedBox(height: 8),
+							Row(
+								children: [
+									Expanded(
+										child: ElevatedButton.icon(
+											onPressed: isBackgroundServiceRunning ? null : onStartBackgroundService,
+											icon: const Icon(Icons.play_arrow),
+											label: const Text('Start Background'),
+											style: ElevatedButton.styleFrom(
+												backgroundColor: Colors.green,
+												foregroundColor: Colors.white,
+											),
+										),
+									),
+									const SizedBox(width: 8),
+									Expanded(
+										child: ElevatedButton.icon(
+											onPressed: !isBackgroundServiceRunning ? null : onStopBackgroundService,
+											icon: const Icon(Icons.stop),
+											label: const Text('Stop Background'),
+											style: ElevatedButton.styleFrom(
+												backgroundColor: Colors.red,
+												foregroundColor: Colors.white,
+											),
+										),
+									),
+								],
+							),
+	
+							const SizedBox(height: 8),
+	
+							// Status indicator
+							Row(
+								children: [
+									Icon(
+										isBackgroundServiceRunning ? Icons.circle : Icons.circle_outlined,
+										color: isBackgroundServiceRunning ? Colors.green : Colors.grey,
+										size: 16,
+									),
+									const SizedBox(width: 8),
+									Text(
+										isBackgroundServiceRunning 
+											? 'Background service is running'
+											: 'Background service is stopped',
+										style: TextStyle(
+											color: isBackgroundServiceRunning ? Colors.green : Colors.grey,
+											fontSize: 12,
+										),
+									),
+								],
+							),
+						],
+					],
+				),
+			),
+		);
+	}
+}
 
 ///////////////////////////////////////////////////////////////////////////
 // EEG Connections Widget
