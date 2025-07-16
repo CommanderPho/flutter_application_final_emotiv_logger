@@ -562,34 +562,34 @@ class BackgroundServiceControlWidget extends StatelessWidget {
 ///////////////////////////////////////////////////////////////////////////
 // EEG Connections Widget
 class ScannerWidget extends StatelessWidget { // Displays the result of scanning for bluetooth devices and discovered devices
-  final bool isScanning;
-  final VoidCallback onToggleScan;
-  final List<String> foundDevices;
-  final void Function(String deviceName) onConnectToDevice; // Add this
+	final bool isScanning;
+	final VoidCallback onToggleScan;
+	final List<String> foundDevices;
+	final void Function(String deviceName) onConnectToDevice; // Add this
 
-  const ScannerWidget({
-    super.key,
-    required this.isScanning,
-    required this.onToggleScan,
-    required this.foundDevices,
-    required this.onConnectToDevice, // Add this
-  });
+	const ScannerWidget({
+		super.key,
+		required this.isScanning,
+		required this.onToggleScan,
+		required this.foundDevices,
+		required this.onConnectToDevice, // Add this
+	});
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+	@override
+	Widget build(BuildContext context) {
+		return Column(
+			crossAxisAlignment: CrossAxisAlignment.start,
+			children: [
 	// Scanning row
 	Row(
-	  children: [
-	    const Text('Scanning:'),
-	    const Spacer(),
-	    ElevatedButton(
-	      onPressed: onToggleScan,
-	      child: Text(isScanning ? 'Stop' : 'Start'),
-	    ),
-	  ],
+			children: [
+					const Text('Scanning:'),
+					const Spacer(),
+					ElevatedButton(
+							onPressed: onToggleScan,
+							child: Text(isScanning ? 'Stop' : 'Start'),
+					),
+			],
 	),
 
 	const SizedBox(height: 16),
@@ -601,205 +601,205 @@ class ScannerWidget extends StatelessWidget { // Displays the result of scanning
 
 	// Device list with connect buttons
 	...foundDevices.map((device) => 
-	  Padding(
-	    padding: const EdgeInsets.symmetric(vertical: 4.0),
-	    child: Row(
-	      children: [
+			Padding(
+					padding: const EdgeInsets.symmetric(vertical: 4.0),
+					child: Row(
+							children: [
 		Expanded(
-		  child: Text('• $device'),
+				child: Text('• $device'),
 		),
 		ElevatedButton(
-		  onPressed: () => onConnectToDevice(device),
-		  child: const Text('Connect'),
+				onPressed: () => onConnectToDevice(device),
+				child: const Text('Connect'),
 		),
-	      ],
-	    ),
-	  ),
+							],
+					),
+			),
 	),
-      ],
-    );
-  }
+			],
+		);
+	}
 }
 
 class ConnectionWidget extends StatelessWidget { // Displays the name of the connected device and a disconnect button
-  final String deviceName;
-  final VoidCallback onDisconnect;
+	final String deviceName;
+	final VoidCallback onDisconnect;
 
-  const ConnectionWidget({
-    super.key,
-    required this.deviceName,
-    required this.onDisconnect,
-  });
+	const ConnectionWidget({
+		super.key,
+		required this.deviceName,
+		required this.onDisconnect,
+	});
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+	@override
+	Widget build(BuildContext context) {
+		return Column(
+			crossAxisAlignment: CrossAxisAlignment.start,
+			children: [
 	// Connected row
 	Row(
-	  children: [
-	    const Text('Connected:'),
-	    const Spacer(),
-	    ElevatedButton(
-	      onPressed: onDisconnect,
-	      child: const Text('Disconnect'),
-	    ),
-	  ],
+			children: [
+					const Text('Connected:'),
+					const Spacer(),
+					ElevatedButton(
+							onPressed: onDisconnect,
+							child: const Text('Disconnect'),
+					),
+			],
 	),
 
 	const SizedBox(height: 8),
 
 	// Device name
 	Text(deviceName),
-      ],
-    );
-  }
+			],
+		);
+	}
 }
 
 class BluetoothControlWidget extends StatelessWidget { // Wraps the scanner and connection widgets based on scanning state and displays them based on the connection state
-  final bool isConnected;
-  final bool isScanning;
-  final String connectedDeviceName;
-  final List<String> foundDevices;
-  final VoidCallback onToggleScan;
-  final VoidCallback onDisconnect;
-  final void Function(String deviceName) onConnectToDevice;
+	final bool isConnected;
+	final bool isScanning;
+	final String connectedDeviceName;
+	final List<String> foundDevices;
+	final VoidCallback onToggleScan;
+	final VoidCallback onDisconnect;
+	final void Function(String deviceName) onConnectToDevice;
 
-  const BluetoothControlWidget({
-    super.key,
-    required this.isConnected,
-    required this.isScanning,
-    required this.connectedDeviceName,
-    required this.foundDevices,
-    required this.onToggleScan,
-    required this.onDisconnect,
-    required this.onConnectToDevice,
-  });
+	const BluetoothControlWidget({
+		super.key,
+		required this.isConnected,
+		required this.isScanning,
+		required this.connectedDeviceName,
+		required this.foundDevices,
+		required this.onToggleScan,
+		required this.onDisconnect,
+		required this.onConnectToDevice,
+	});
 
-  @override
-  Widget build(BuildContext context) {
-    return isConnected
+	@override
+	Widget build(BuildContext context) {
+		return isConnected
 	? ConnectionWidget(
-	    deviceName: connectedDeviceName,
-	    onDisconnect: onDisconnect,
-	  )
+					deviceName: connectedDeviceName,
+					onDisconnect: onDisconnect,
+			)
 	: ScannerWidget(
-	    isScanning: isScanning,
-	    onToggleScan: onToggleScan,
-	    foundDevices: foundDevices,
-	    onConnectToDevice: onConnectToDevice,
-	  );
-  }
+					isScanning: isScanning,
+					onToggleScan: onToggleScan,
+					foundDevices: foundDevices,
+					onConnectToDevice: onConnectToDevice,
+			);
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////
 // Settings Screen
 class FileSettingsScreen extends StatefulWidget {
-  FileSettingsScreen(String? selectedDirectory);
+	FileSettingsScreen(String? selectedDirectory);
 
-  @override
-  _FileSettingsScreenState createState() => _FileSettingsScreenState();
+	@override
+	_FileSettingsScreenState createState() => _FileSettingsScreenState();
 }
 
 class _FileSettingsScreenState extends State<FileSettingsScreen> {
-  String? _selectedDirectory;
+	String? _selectedDirectory;
 
-  @override
-  Widget build(BuildContext context) {
+	@override
+	Widget build(BuildContext context) {
 	return Scaffold(
-	  appBar: AppBar(title: Text('File Settings')),
-	  body: Column(
+			appBar: AppBar(title: Text('File Settings')),
+			body: Column(
 		children: [
-		  ListTile(
+				ListTile(
 			title: Text('Save Directory'),
 			subtitle: Text(_selectedDirectory ?? 'Default (App Documents)'),
 			trailing: Icon(Icons.folder),
 			onTap: () => _selectDirectory(context),
-		  ),
-		  ElevatedButton(
+				),
+				ElevatedButton(
 			onPressed: () => _applySettings(context),
 			child: Text('Apply Settings'),
-		  ),
+				),
 		],
-	  ),
+			),
 	);
-  }
+	}
 
-  Future<void> _selectDirectory(BuildContext context) async {
-  try {
+	Future<void> _selectDirectory(BuildContext context) async {
+	try {
 	// First check if we already have permission
 	final hasPermission = await DirectoryHelper.hasStoragePermission();
 
 	if (!hasPermission) {
-	  // Show dialog explaining why we need permission
-	  final shouldRequest = await showDialog<bool>(
+			// Show dialog explaining why we need permission
+			final shouldRequest = await showDialog<bool>(
 		context: context,
 		builder: (context) => AlertDialog(
-		  title: const Text('Storage Permission Required'),
-		  content: const Text(
+				title: const Text('Storage Permission Required'),
+				content: const Text(
 			'This app needs storage permission to save EEG data files to your chosen directory. '
 			'Please grant storage permission in the next dialog.',
-		  ),
-		  actions: [
+				),
+				actions: [
 			TextButton(
-			  onPressed: () => Navigator.pop(context, false),
-			  child: const Text('Cancel'),
+					onPressed: () => Navigator.pop(context, false),
+					child: const Text('Cancel'),
 			),
 			TextButton(
-			  onPressed: () => Navigator.pop(context, true),
-			  child: const Text('Grant Permission'),
+					onPressed: () => Navigator.pop(context, true),
+					child: const Text('Grant Permission'),
 			),
-		  ],
+				],
 		),
-	  );
+			);
 
-	  if (shouldRequest != true) return;
+			if (shouldRequest != true) return;
 
-	  // Request permission
-	  final granted = await DirectoryHelper.requestStoragePermission();
-	  if (!granted) {
+			// Request permission
+			final granted = await DirectoryHelper.requestStoragePermission();
+			if (!granted) {
 		ScaffoldMessenger.of(context).showSnackBar(
-		  const SnackBar(
+				const SnackBar(
 			content: Text('Storage permission is required to select save directory'),
 			action: SnackBarAction(
-			  label: 'Settings',
-			  onPressed: openAppSettings,
+					label: 'Settings',
+					onPressed: openAppSettings,
 			),
-		  ),
+				),
 		);
 		return;
-	  }
+			}
 	}
 
 	// Permission granted, now select directory
 	final selectedDir = await DirectoryHelper.selectDirectory();
 	if (selectedDir != null) {
-	  setState(() {
+			setState(() {
 		_selectedDirectory = selectedDir;
-	  });
+			});
 
-	  ScaffoldMessenger.of(context).showSnackBar(
+			ScaffoldMessenger.of(context).showSnackBar(
 		SnackBar(
-		  content: Text('Directory selected: ${selectedDir.split('/').last}'),
+				content: Text('Directory selected: ${selectedDir.split('/').last}'),
 		),
-	  );
+			);
 	}
 
-  } catch (e) {
+	} catch (e) {
 	print("Error in _selectDirectory: $e");
 	ScaffoldMessenger.of(context).showSnackBar(
-	  SnackBar(
+			SnackBar(
 		content: Text('Error selecting directory: $e'),
-	  ),
+			),
 	);
-  }
+	}
 }
 
-  Future<void> _applySettings(BuildContext context) async {
+	Future<void> _applySettings(BuildContext context) async {
 	// Apply to your BLE manager
 	// emotivBLEManager.setCustomSaveDirectory(_selectedDirectory);
 	Navigator.pop(context, _selectedDirectory);
 
-  }
+	}
 }
