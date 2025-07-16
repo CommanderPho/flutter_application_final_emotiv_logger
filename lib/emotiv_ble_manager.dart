@@ -233,11 +233,11 @@ class EmotivBLEManager {
 		// Listen for data
 		characteristic.lastValueStream.listen((data) {
 			if (data.isNotEmpty) {
-			_processEEGData(Uint8List.fromList(data));
+			  _processEEGData(Uint8List.fromList(data));
 			}
 		});
 
-		// Write configuration data (equivalent to your Swift code)
+		// Write configuration data (equivalent to your Swift code) -- I think this is to indicate to the headset that we are connected.
 		if (characteristic.properties.write) {
 			final configData = Uint8List.fromList([0x01, 0x00]); // 0x0001 as little-endian
 			await characteristic.write(configData, withoutResponse: false);
@@ -275,18 +275,18 @@ class EmotivBLEManager {
 		final decodedValues = CryptoUtils.decryptToDoubleList(data);
 
 		if (decodedValues.isNotEmpty) {
-		_eegDataController.add(decodedValues);
-		print("EEG Data: ${decodedValues.take(5).join(', ')}..."); // Print first 5 values
+      _eegDataController.add(decodedValues);
+      print("EEG Data: ${decodedValues.take(5).join(', ')}..."); // Print first 5 values
 
-		// Write to file using the file writer
-		_fileWriter?.writeEEGData(decodedValues);
+      // Write to file using the file writer
+      _fileWriter?.writeEEGData(decodedValues);
 		}
 	}
 
 	bool _validateData(Uint8List data) {
 		if (data.length < readSize) {
-		print("EmotivBLEManager: Data size too small: ${data.length}");
-		return false;
+      print("EmotivBLEManager: Data size too small: ${data.length}");
+      return false;
 		}
 		return true;
 	}
@@ -314,13 +314,13 @@ class EmotivBLEManager {
 	Future<void> _closeFileWriter() async {
 		if (_fileWriter != null) {
 		await _fileWriter!.dispose();
-		_fileWriter = null;
+		  _fileWriter = null;
 		}
 	}
 
 	void _updateStatus(String status) {
-		print(status);
-		_statusController.add(status);
+    print(status);
+    _statusController.add(status);
 	}
 
 	void _updateFoundDevices(List<String> devices) {
