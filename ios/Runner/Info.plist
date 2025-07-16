@@ -49,5 +49,10 @@
     <string>This app needs Bluetooth access to connect to Emotiv EEG devices</string>
     <key>NSBluetoothPeripheralUsageDescription</key>
     <string>This app needs Bluetooth access to connect to Emotiv EEG devices</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>bluetooth-central</string>
+		<string>background-processing</string>
+	</array>
 </dict>
 </plist>
