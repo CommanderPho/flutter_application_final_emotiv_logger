@@ -52,6 +52,11 @@ class BackgroundService {
       }
     });
     
+    service.on('setCustomDirectory').listen((event) async {
+      final directoryPath = event?['directoryPath'] as String?;
+      _bleManager?.setCustomSaveDirectory(directoryPath);
+    });
+    
     service.on('disconnect').listen((event) async {
       await _bleManager?.disconnect();
     });
@@ -95,28 +100,16 @@ class BackgroundService {
     service.invoke("connectToDevice", {"deviceName": deviceName});
   }
   
+  static Future<void> setCustomDirectory(String? directoryPath) async {
+    final service = FlutterBackgroundService();
+    service.invoke("setCustomDirectory", {"directoryPath": directoryPath});
+  }
+  
   static Future<void> disconnect() async {
     final service = FlutterBackgroundService();
     service.invoke("disconnect");
   }
 }
-
-
-
-// // Android only
-// class WakeLockManager {
-//   // WakeLock is an Android system mechanism that prevents the device from going to sleep or entering power-saving modes that would interrupt your app's operation.
-//   static const MethodChannel _channel = MethodChannel('wake_lock');
-  
-//   static Future<void> acquire() async {
-//     await _channel.invokeMethod('acquire');
-//   }
-  
-//   static Future<void> release() async {
-//     await _channel.invokeMethod('release');
-//   }
-// }
-
 
 class BatteryOptimization {
   static Future<void> requestBatteryOptimizationExemption() async {
