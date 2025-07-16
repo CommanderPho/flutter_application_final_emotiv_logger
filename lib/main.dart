@@ -6,7 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'emotiv_ble_manager.dart';
 import 'file_storage.dart';
-
+import 'background_service.dart';
 
 void main() {
   runApp(const EmotivBLEApp());
