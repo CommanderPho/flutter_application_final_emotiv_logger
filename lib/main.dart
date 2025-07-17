@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_final_emotiv_logger/background_service.dart';
-import 'package:flutter_application_final_emotiv_logger/directory_helper.dart';
+import 'package:flutter_emotiv_logger/background_service.dart';
+import 'package:flutter_emotiv_logger/directory_helper.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'emotiv_ble_manager.dart';
