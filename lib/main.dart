@@ -13,11 +13,11 @@ void main() async {
   try {
     // Initialize the background service
     await BackgroundService.initializeService();
+    print('Background service initialized on startup');
   } catch (e) {
     print('Background service initialization failed: $e');
     // Continue without background service if it fails
-  }
-  
+  }  
   runApp(const EmotivBLEApp());
 }
 

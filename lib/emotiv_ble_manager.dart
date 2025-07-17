@@ -193,6 +193,9 @@ class EmotivBLEManager {
 				}
 			});
 
+    // Add debug dump here if needed
+    await debugDumpAllServicesAndCharacteristics();
+
 			// Discover services
 			await _discoverServices();
 
@@ -233,6 +236,143 @@ class EmotivBLEManager {
 			_updateStatus("Error discovering services: $e");
 		}
 	}
+
+  Future<void> debugDumpAllServicesAndCharacteristics() async {
+    if (_emotivDevice == null) {
+      print("DEBUG: No device connected");
+      return;
+    }
+
+    try {
+      print("DEBUG: ========== SERVICES AND CHARACTERISTICS DUMP ==========");
+      
+      List<BluetoothService> services = await _emotivDevice!.discoverServices();
+      
+      for (int serviceIndex = 0; serviceIndex < services.length; serviceIndex++) {
+        BluetoothService service = services[serviceIndex];
+        print("DEBUG: Service #$serviceIndex: ${service.uuid}");
+        print("DEBUG: Service UUID (full): ${service.uuid.toString()}");
+        print("DEBUG: Service isPrimary: ${service.isPrimary}");
+        print("DEBUG: Service characteristics count: ${service.characteristics.length}");
+        
+        for (int charIndex = 0; charIndex < service.characteristics.length; charIndex++) {
+          BluetoothCharacteristic characteristic = service.characteristics[charIndex];
+          print("DEBUG:   Characteristic #$charIndex: ${characteristic.uuid}");
+          print("DEBUG:   Characteristic UUID (full): ${characteristic.uuid.toString()}");
+          print("DEBUG:   Characteristic UUID (upper): ${characteristic.uuid.toString().toUpperCase()}");
+          
+          // Print properties
+          List<String> properties = [];
+          if (characteristic.properties.read) properties.add("READ");
+          if (characteristic.properties.write) properties.add("WRITE");
+          if (characteristic.properties.writeWithoutResponse) properties.add("WRITE_NO_RESPONSE");
+          if (characteristic.properties.notify) properties.add("NOTIFY");
+          if (characteristic.properties.indicate) properties.add("INDICATE");
+          if (characteristic.properties.authenticatedSignedWrites) properties.add("AUTH_SIGNED_WRITES");
+          if (characteristic.properties.extendedProperties) properties.add("EXTENDED_PROPS");
+          if (characteristic.properties.notifyEncryptionRequired) properties.add("NOTIFY_ENCRYPTION_REQUIRED");
+          if (characteristic.properties.indicateEncryptionRequired) properties.add("INDICATE_ENCRYPTION_REQUIRED");
+          
+          print("DEBUG:   Properties: ${properties.join(', ')}");
+          
+          // Try to read current value if readable
+          if (characteristic.properties.read) {
+            try {
+              List<int> value = await characteristic.read();
+              print("DEBUG:   Current value: ${value.take(16).toList()} ${value.length > 16 ? '...(${value.length} bytes total)' : ''}");
+              print("DEBUG:   Current value (hex): ${value.take(16).map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}");
+            } catch (e) {
+              print("DEBUG:   Could not read current value: $e");
+            }
+          }
+          
+          // Set up notification listener to capture a few packets
+          if (characteristic.properties.notify || characteristic.properties.indicate) {
+            try {
+              print("DEBUG:   Setting up notification listener for 5 seconds...");
+              
+              int packetCount = 0;
+              const int maxPackets = 5;
+              
+              // Listen to the stream
+              StreamSubscription? subscription;
+              subscription = characteristic.lastValueStream.listen((data) {
+                if (packetCount < maxPackets && data.isNotEmpty) {
+                  packetCount++;
+                  print("DEBUG:   Packet #$packetCount: ${data.take(16).toList()} ${data.length > 16 ? '...(${data.length} bytes total)' : ''}");
+                  print("DEBUG:   Packet #$packetCount (hex): ${data.take(16).map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}");
+                  
+                  // Check if this matches known UUIDs
+                  String charUuidUpper = characteristic.uuid.toString().toUpperCase();
+                  if (charUuidUpper == transferDataUuid.toUpperCase()) {
+                    print("DEBUG:   *** This is the EEG DATA characteristic ***");
+                    if (data.length >= readSize) {
+                      try {
+                        final decodedValues = CryptoUtils.decryptToDoubleList(Uint8List.fromList(data));
+                        if (decodedValues.isNotEmpty) {
+                          print("DEBUG:   Decoded EEG values: ${decodedValues.take(5).join(', ')}...");
+                        }
+                      } catch (e) {
+                        print("DEBUG:   Could not decode EEG data: $e");
+                      }
+                    }
+                  } else if (charUuidUpper == transferMemsUuid.toUpperCase()) {
+                    print("DEBUG:   *** This is the MEMS characteristic ***");
+                  }
+                  
+                  if (packetCount >= maxPackets) {
+                    subscription?.cancel();
+                  }
+                }
+              });
+              
+              // Enable notifications
+              await characteristic.setNotifyValue(true);
+              
+              // Wait for packets or timeout
+              await Future.delayed(const Duration(seconds: 5));
+              
+              // Clean up
+              await subscription?.cancel();
+              await characteristic.setNotifyValue(false);
+              
+              if (packetCount == 0) {
+                print("DEBUG:   No packets received during 5 second window");
+              }
+              
+            } catch (e) {
+              print("DEBUG:   Error setting up notification: $e");
+            }
+          }
+          
+          // Print descriptors if any
+          if (characteristic.descriptors.isNotEmpty) {
+            print("DEBUG:   Descriptors:");
+            for (int descIndex = 0; descIndex < characteristic.descriptors.length; descIndex++) {
+              BluetoothDescriptor descriptor = characteristic.descriptors[descIndex];
+              print("DEBUG:     Descriptor #$descIndex: ${descriptor.uuid}");
+              try {
+                List<int> descValue = await descriptor.read();
+                print("DEBUG:     Descriptor value: ${descValue.take(16).toList()}");
+              } catch (e) {
+                print("DEBUG:     Could not read descriptor: $e");
+              }
+            }
+          }
+          
+          print("DEBUG:   ---");
+        }
+        
+        print("DEBUG: ==========================================");
+      }
+      
+      print("DEBUG: ========== END DUMP ==========");
+      
+    } catch (e) {
+      print("DEBUG: Error during debug dump: $e");
+    }
+  }
+
 
 	Future<void> _setupEEGDataCharacteristic(BluetoothCharacteristic characteristic) async {
 		try {
