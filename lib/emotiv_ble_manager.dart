@@ -165,32 +165,32 @@ class EmotivBLEManager {
 
 	Future<void> connectToDevice(BluetoothDevice device) async {
 		try {
-		_updateStatus("Connecting to ${device.platformName}...");
+			_updateStatus("Connecting to ${device.platformName}...");
 
-		await device.connect(timeout: const Duration(seconds: 15));
-		_emotivDevice = device;
-		_isConnected = true;
-		_connectionController.add(true);
+			await device.connect(timeout: const Duration(seconds: 15));
+			_emotivDevice = device;
+			_isConnected = true;
+			_connectionController.add(true);
 
-		_updateStatus("Connected to ${device.platformName}");
+			_updateStatus("Connected to ${device.platformName}");
 
-		// Initialize file writer after successful connection
-		await _initializeFileWriter();
+			// Initialize file writer after successful connection
+			await _initializeFileWriter();
 
-		// Listen for disconnection
-		device.connectionState.listen((state) {
-			if (state == BluetoothConnectionState.disconnected) {
-			_handleDisconnection();
-			}
-		});
+			// Listen for disconnection
+			device.connectionState.listen((state) {
+				if (state == BluetoothConnectionState.disconnected) {
+					_handleDisconnection();
+				}
+			});
 
-		// Discover services
-		await _discoverServices();
+			// Discover services
+			await _discoverServices();
 
 		} catch (e) {
-		_updateStatus("Failed to connect: $e");
-		_isConnected = false;
-		_connectionController.add(false);
+			_updateStatus("Failed to connect: $e");
+			_isConnected = false;
+			_connectionController.add(false);
 		}
 	}
 
@@ -198,72 +198,72 @@ class EmotivBLEManager {
 		if (_emotivDevice == null) return;
 
 		try {
-		_updateStatus("Discovering services...");
+			_updateStatus("Discovering services...");
 
-		List<BluetoothService> services = await _emotivDevice!.discoverServices();
+			List<BluetoothService> services = await _emotivDevice!.discoverServices();
 
-		for (BluetoothService service in services) {
-			print("Discovered service: ${service.uuid}");
+			for (BluetoothService service in services) {
+				print("Discovered service: ${service.uuid}");
 
-			for (BluetoothCharacteristic characteristic in service.characteristics) {
-			print("Discovered characteristic: ${characteristic.uuid}");
+				for (BluetoothCharacteristic characteristic in service.characteristics) {
+          print("Discovered characteristic: ${characteristic.uuid}");
 
-			if (characteristic.uuid.toString().toUpperCase() == transferDataUuid.toUpperCase()) {
-				_dataCharacteristic = characteristic;
-				await _setupEEGDataCharacteristic(characteristic);
-			} else if (characteristic.uuid.toString().toUpperCase() == transferMemsUuid.toUpperCase()) {
-				_memsCharacteristic = characteristic;
-				await _setupMemsCharacteristic(characteristic);
+          if (characteristic.uuid.toString().toUpperCase() == transferDataUuid.toUpperCase()) {
+            _dataCharacteristic = characteristic;
+            await _setupEEGDataCharacteristic(characteristic);
+          } else if (characteristic.uuid.toString().toUpperCase() == transferMemsUuid.toUpperCase()) {
+            _memsCharacteristic = characteristic;
+            await _setupMemsCharacteristic(characteristic);
+          }
+				}
 			}
-			}
-		}
 
-		_updateStatus("Setup complete - receiving data");
+			_updateStatus("Setup complete - receiving data");
 
 		} catch (e) {
-		_updateStatus("Error discovering services: $e");
+			_updateStatus("Error discovering services: $e");
 		}
 	}
 
 	Future<void> _setupEEGDataCharacteristic(BluetoothCharacteristic characteristic) async {
 		try {
-		// Enable notifications
-		await characteristic.setNotifyValue(true);
+			// Enable notifications
+			await characteristic.setNotifyValue(true);
 
-		// Listen for data
-		characteristic.lastValueStream.listen((data) {
-			if (data.isNotEmpty) {
-			  _processEEGData(Uint8List.fromList(data));
+			// Listen for data
+			characteristic.lastValueStream.listen((data) {
+				if (data.isNotEmpty) {
+				_processEEGData(Uint8List.fromList(data));
+				}
+			});
+
+			// Write configuration data (equivalent to your Swift code) -- I think this is to indicate to the headset that we are connected.
+			if (characteristic.properties.write) {
+				final configData = Uint8List.fromList([0x01, 0x00]); // 0x0001 as little-endian
+				await characteristic.write(configData, withoutResponse: false);
 			}
-		});
 
-		// Write configuration data (equivalent to your Swift code) -- I think this is to indicate to the headset that we are connected.
-		if (characteristic.properties.write) {
-			final configData = Uint8List.fromList([0x01, 0x00]); // 0x0001 as little-endian
-			await characteristic.write(configData, withoutResponse: false);
-		}
-
-		_updateStatus("Data characteristic configured");
+			_updateStatus("Data characteristic configured");
 
 		} catch (e) {
-		_updateStatus("Error setting up data characteristic: $e");
+			_updateStatus("Error setting up data characteristic: $e");
 		}
 	}
 
 	Future<void> _setupMemsCharacteristic(BluetoothCharacteristic characteristic) async {
 		try {
-		await characteristic.setNotifyValue(true);
+			await characteristic.setNotifyValue(true);
 
-		characteristic.lastValueStream.listen((data) {
-			if (data.isNotEmpty) {
-			_memsDataController.add(Uint8List.fromList(data));
-			}
-		});
+			characteristic.lastValueStream.listen((data) {
+				if (data.isNotEmpty) {
+				_memsDataController.add(Uint8List.fromList(data));
+				}
+			});
 
-		_updateStatus("MEMS characteristic configured");
+			_updateStatus("MEMS characteristic configured");
 
 		} catch (e) {
-		_updateStatus("Error setting up MEMS characteristic: $e");
+			_updateStatus("Error setting up MEMS characteristic: $e");
 		}
 	}
 
