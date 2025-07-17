@@ -10,8 +10,13 @@ import 'file_storage.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize the background service
-  await BackgroundService.initializeService();
+  try {
+    // Initialize the background service
+    await BackgroundService.initializeService();
+  } catch (e) {
+    print('Background service initialization failed: $e');
+    // Continue without background service if it fails
+  }
   
   runApp(const EmotivBLEApp());
 }
