@@ -13,6 +13,15 @@ class EmotivBLEManager {
 	static const String transferDataUuid = "81072F41-9F3D-11E3-A9DC-0002A5D5C51B";
 	static const String transferMemsUuid = "81072F42-9F3D-11E3-A9DC-0002A5D5C51B";
 
+// service.characteristics[0].uuid.toString().toUpperCase()
+// "2A00"
+// service.characteristics[1].uuid.toString().toUpperCase()
+// "2A01"
+// service.characteristics[2].uuid.toString().toUpperCase()
+// "2A04"
+// service.characteristics[3].uuid.toString().toUpperCase()
+// "2AA6"
+
 	static const int readSize = 32;
 
 	BluetoothDevice? _emotivDevice;
