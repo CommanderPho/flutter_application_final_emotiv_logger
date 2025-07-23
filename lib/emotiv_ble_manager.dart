@@ -10,8 +10,8 @@ import 'eeg_file_writer.dart';
 class EmotivBLEManager {
 	// UUIDs from your Swift code
 	static const String deviceNameUuid = "81072F40-9F3D-11E3-A9DC-0002A5D5C51B";
-	static const String transferDataUuid = "81072F41-9F3D-11E3-A9DC-0002A5D5C51B";
-	static const String transferMemsUuid = "81072F42-9F3D-11E3-A9DC-0002A5D5C51B";
+	static const String transferEEGDataUuid = "81072F41-9F3D-11E3-A9DC-0002A5D5C51B"; // UUID of the main data stream with ID 0x10
+	static const String transferMemsUuid = "81072F42-9F3D-11E3-A9DC-0002A5D5C51B"; // UUID of the gyro/other? data stream with ID 0x20
 
 // service.characteristics[0].uuid.toString().toUpperCase()
 // "2A00"
@@ -25,10 +25,10 @@ class EmotivBLEManager {
 	static const int readSize = 32;
 
 	BluetoothDevice? _emotivDevice;
-	BluetoothCharacteristic? _dataCharacteristic;
-	BluetoothCharacteristic? _memsCharacteristic;
+	BluetoothCharacteristic? _eegDataCharacteristic;
+	BluetoothCharacteristic? _memsDataCharacteristic;
 
-	bool _shouldAutoConnectToFirst = false;
+	final bool _shouldAutoConnectToFirst = false;
 	bool _isConnected = false;
 	bool _isScanning = false;
 	
@@ -217,11 +217,11 @@ class EmotivBLEManager {
 				for (BluetoothCharacteristic characteristic in service.characteristics) {
           print("Discovered characteristic: ${characteristic.uuid}");
 
-          if (characteristic.uuid.toString().toUpperCase() == transferDataUuid.toUpperCase()) {
-            _dataCharacteristic = characteristic;
+          if (characteristic.uuid.toString().toUpperCase() == transferEEGDataUuid.toUpperCase()) {
+            _eegDataCharacteristic = characteristic;
             await _setupEEGDataCharacteristic(characteristic);
           } else if (characteristic.uuid.toString().toUpperCase() == transferMemsUuid.toUpperCase()) {
-            _memsCharacteristic = characteristic;
+            _memsDataCharacteristic = characteristic;
             await _setupMemsCharacteristic(characteristic);
           }
 				}
@@ -242,7 +242,7 @@ class EmotivBLEManager {
 			// Listen for data
 			characteristic.lastValueStream.listen((data) {
 				if (data.isNotEmpty) {
-				_processEEGData(Uint8List.fromList(data));
+				  _processEEGData(Uint8List.fromList(data));
 				}
 			});
 
@@ -265,7 +265,7 @@ class EmotivBLEManager {
 
 			characteristic.lastValueStream.listen((data) {
 				if (data.isNotEmpty) {
-				_memsDataController.add(Uint8List.fromList(data));
+				  _memsDataController.add(Uint8List.fromList(data));
 				}
 			});
 
@@ -303,8 +303,8 @@ class EmotivBLEManager {
 	void _handleDisconnection() {
 		_isConnected = false;
 		_emotivDevice = null;
-		_dataCharacteristic = null;
-		_memsCharacteristic = null;
+		_eegDataCharacteristic = null;
+		_memsDataCharacteristic = null;
 		_connectionController.add(false);
 		_updateStatus("Disconnected - closing file and restarting scan...");
 
