@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+EXTERNAL/Emotiv_Epoc_Reverse_Engineering/_BAK
+EXTERNAL/Emotiv_Epoc_Reverse_Engineering/bugreport-lineage_walleye-BP1A.250505.005-2025-07-22-20-08-12
+EXTERNAL/Emotiv_Epoc_Reverse_Engineering/fluoride
+EXTERNAL/Emotiv_Epoc_Reverse_Engineering/bugreport-lineage_walleye-BP1A.250505.005-2025-07-22-20-08-12.zip
