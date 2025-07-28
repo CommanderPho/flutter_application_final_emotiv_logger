@@ -13,6 +13,7 @@ class EmotivBLEManager {
 	static const String transferEEGDataUuid = "81072F41-9F3D-11E3-A9DC-0002A5D5C51B"; // UUID of the main data stream with ID 0x10
 	static const String transferMemsUuid = "81072F42-9F3D-11E3-A9DC-0002A5D5C51B"; // UUID of the gyro/other? data stream with ID 0x20
 
+
 // service.characteristics[0].uuid.toString().toUpperCase()
 // "2A00"
 // service.characteristics[1].uuid.toString().toUpperCase()
