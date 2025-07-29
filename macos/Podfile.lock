@@ -1,15 +1,21 @@
 PODS:
   - FlutterMacOS (1.0.0)
+  - lsl_bindings (0.0.1):
+    - FlutterMacOS
 
 DEPENDENCIES:
   - FlutterMacOS (from `Flutter/ephemeral`)
+  - lsl_bindings (from `Flutter/ephemeral/.symlinks/plugins/lsl_bindings/macos`)
 
 EXTERNAL SOURCES:
   FlutterMacOS:
     :path: Flutter/ephemeral
+  lsl_bindings:
+    :path: Flutter/ephemeral/.symlinks/plugins/lsl_bindings/macos
 
 SPEC CHECKSUMS:
   FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
+  lsl_bindings: 5e6056e6017df8ab7018b7391d0ffc1f59408c4b
 
 PODFILE CHECKSUM: 54d867c82ac51cbd61b565781b9fada492027009
 

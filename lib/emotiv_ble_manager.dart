@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:io';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:lsl_flutter/lsl_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 // import 'package:lsl_flutter/lsl_flutter.dart';
 import 'crypto_utils.dart';
@@ -88,8 +89,8 @@ class EmotivBLEManager {
 			_eegStreamInfo = StreamInfoFactory.createDoubleStreamInfo(
 				"Emotiv EEG",
 				"EEG",
-				DoubleChannelFormat(),
-				channelCount: 8, // 8 EEG channels from decrypted data
+				Float32ChannelFormat(),
+				channelCount: 14, // 8 EEG channels from decrypted data
 				nominalSRate: 128.0, // Emotiv typically runs at 128 Hz
 				sourceId: deviceId
 			);
@@ -409,8 +410,7 @@ class EmotivBLEManager {
 					await _lslWorker!.removeStream("Emotiv EEG");
 				}
 				
-				// Dispose the worker
-				await _lslWorker!.dispose();
+				// Clean up the worker
 				_lslWorker = null;
 			}
 			
