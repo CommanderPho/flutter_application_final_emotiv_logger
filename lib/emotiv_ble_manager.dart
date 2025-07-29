@@ -216,15 +216,15 @@ class EmotivBLEManager {
 				print("Discovered service: ${service.uuid}");
 
 				for (BluetoothCharacteristic characteristic in service.characteristics) {
-          print("Discovered characteristic: ${characteristic.uuid}");
+					print("Discovered characteristic: ${characteristic.uuid}");
 
-          if (characteristic.uuid.toString().toUpperCase() == transferEEGDataUuid.toUpperCase()) {
-            _eegDataCharacteristic = characteristic;
-            await _setupEEGDataCharacteristic(characteristic);
-          } else if (characteristic.uuid.toString().toUpperCase() == transferMemsUuid.toUpperCase()) {
-            _memsDataCharacteristic = characteristic;
-            await _setupMemsCharacteristic(characteristic);
-          }
+					if (characteristic.uuid.toString().toUpperCase() == transferEEGDataUuid.toUpperCase()) {
+						_eegDataCharacteristic = characteristic;
+						await _setupEEGDataCharacteristic(characteristic);
+					} else if (characteristic.uuid.toString().toUpperCase() == transferMemsUuid.toUpperCase()) {
+						_memsDataCharacteristic = characteristic;
+						await _setupMemsCharacteristic(characteristic);
+					}
 				}
 			}
 
@@ -285,18 +285,18 @@ class EmotivBLEManager {
 		final decodedValues = CryptoUtils.decryptToDoubleList(data);
 
 		if (decodedValues.isNotEmpty) {
-      _eegDataController.add(decodedValues);
-      print("EEG Data: ${decodedValues.take(5).join(', ')}..."); // Print first 5 values
+			_eegDataController.add(decodedValues);
+			print("EEG Data: ${decodedValues.take(5).join(', ')}..."); // Print first 5 values
 
-      // Write to file using the file writer
-      _fileWriter?.writeEEGData(decodedValues);
+			// Write to file using the file writer
+			_fileWriter?.writeEEGData(decodedValues);
 		}
 	}
 
 	bool _validateData(Uint8List data) {
 		if (data.length < readSize) {
-      print("EmotivBLEManager: Data size too small: ${data.length}");
-      return false;
+			print("EmotivBLEManager: Data size too small: ${data.length}");
+			return false;
 		}
 		return true;
 	}

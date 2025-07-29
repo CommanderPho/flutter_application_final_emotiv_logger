@@ -38,8 +38,7 @@ dependencies:
   path_provider: ^2.1.5
   file_picker: ^10.2.0
   device_info_plus: ^11.5.0
-  flutter_background_service: ^5.0.5
-  flutter_background_service_android: ^6.2.4
+
   # liblsl: ^0.5.1
 
 
