@@ -38,6 +38,7 @@ dependencies:
   path_provider: ^2.1.5
   file_picker: ^10.2.0
   device_info_plus: ^11.5.0
+  shared_preferences: ^2.5.3
 
   # liblsl: ^0.5.1
 
