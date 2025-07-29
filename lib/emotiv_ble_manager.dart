@@ -323,7 +323,7 @@ class EmotivBLEManager {
 
 	Future<void> _closeFileWriter() async {
 		if (_fileWriter != null) {
-		await _fileWriter!.dispose();
+		  await _fileWriter!.dispose();
 		  _fileWriter = null;
 		}
 	}

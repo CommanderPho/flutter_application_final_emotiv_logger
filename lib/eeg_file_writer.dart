@@ -62,8 +62,22 @@ class EEGFileWriter {
 	  final fileName = 'eeg_data_$timestamp.csv';
 
 	  print("Target Directory: ${targetDirectory.path}");
+	  print("Target Directory exists: ${await targetDirectory.exists()}");
+	  
 	  _eegDataFile = File('${targetDirectory.path}/$fileName');
 	  print("EEG Data File: ${_eegDataFile?.path}");
+	  
+	  // Test write a simple line to verify file creation works
+	  try {
+		await _eegDataFile!.writeAsString("timestamp,test\n");
+		print("Test write successful - file created");
+		final exists = await _eegDataFile!.exists();
+		final size = exists ? await _eegDataFile!.length() : 0;
+		print("File exists: $exists, size: $size bytes");
+	  } catch (e) {
+		print("Test write failed: $e");
+		return false;
+	  }
 
 	  _eegDataSink = _eegDataFile!.openWrite();
 
@@ -176,6 +190,8 @@ class EEGFileWriter {
   Future<void> dispose() async {
 	if (_isDisposed) return;
 	print("EEGFileWriter.dispose(): closing EEG Data File: ${_eegDataFile?.path}");
+	
+	// Mark as disposed first to prevent any new operations
 	_isDisposed = true;
 
 	try {
@@ -183,9 +199,22 @@ class EEGFileWriter {
 	  _flushTimer?.cancel();
 	  _flushTimer = null;
 
-	  // Flush any remaining data
+	  // Flush any remaining data before closing
+	  if (_eegDataSink != null && _writeBuffer.isNotEmpty) {
+		try {
+		  for (String line in _writeBuffer) {
+			_eegDataSink!.writeln(line);
+		  }
+		  _eegDataSink!.flush();
+		  _writeBuffer.clear();
+		} catch (e) {
+		  _updateStatus("Error during final flush: $e");
+		  _writeBuffer.clear(); // Clear buffer even if flush fails
+		}
+	  }
+
+	  // Close the sink
 	  if (_eegDataSink != null) {
-		_flushBuffer();
 		await _eegDataSink!.close();
 	  }
 
