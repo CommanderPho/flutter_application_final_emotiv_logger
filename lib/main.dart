@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_emotiv_logger/directory_helper.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -118,21 +119,25 @@ class _EmotivHomePageState extends State<EmotivHomePage> with WidgetsBindingObse
   }
 
   Future<void> _requestPermissions() async {
-	Map<Permission, PermissionStatus> permissions = await [
-	  Permission.bluetoothScan,
-	  Permission.bluetoothConnect,
-	  Permission.bluetoothAdvertise,
-	  Permission.location,
-	  Permission.manageExternalStorage,
-	  Permission.storage,
-	].request();
 
-	bool allGranted = permissions.values.every((status) => status.isGranted);
-	if (!allGranted) {
-	  setState(() {
-		_statusMessage = "Bluetooth permissions required";
-	  });
-	}
+  if (Platform.isAndroid || Platform.isIOS) {
+      // MissingPluginException (MissingPluginException(No implementation found for method requestPermissions on channel flutter.baseflow.com/permissions/methods))
+      Map<Permission, PermissionStatus> permissions = await [
+        Permission.bluetoothScan,
+        Permission.bluetoothConnect,
+        Permission.bluetoothAdvertise,
+        Permission.location,
+        Permission.manageExternalStorage,
+        Permission.storage,
+      ].request();
+
+      bool allGranted = permissions.values.every((status) => status.isGranted);
+      if (!allGranted) {
+        setState(() {
+        _statusMessage = "Bluetooth permissions required";
+        });
+      }
+    }
   }
 
   Future<void> _startScanning() async {
