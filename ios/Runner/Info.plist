@@ -30,6 +30,8 @@
 	<string>This app needs Bluetooth access to connect to Emotiv EEG devices</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>This app needs Bluetooth access to connect to Emotiv EEG devices</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>This app needs local network access to discover data streams.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>

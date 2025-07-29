@@ -12,5 +12,7 @@
 	<true/>
 	<key>com.apple.security.files.downloads.read-write</key>
 	<true/>
+	<key>com.apple.developer.networking.multicast</key>
+	<true/>
 </dict>
 </plist>
