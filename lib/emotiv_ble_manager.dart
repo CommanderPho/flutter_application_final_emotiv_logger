@@ -368,8 +368,8 @@ class EmotivBLEManager {
   int get bufferedLines => _fileWriter?.bufferedLines ?? 0;
 
   // Force flush any buffered data
-  void flushFileBuffer() {
-	_fileWriter?.flush();
+  Future<void> flushFileBuffer() async {
+	await _fileWriter?.flush();
   }
 
 }

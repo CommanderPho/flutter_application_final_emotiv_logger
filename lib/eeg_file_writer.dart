@@ -9,7 +9,7 @@ class EEGFileWriter {
   final List<String> _writeBuffer = [];
 
   static const int _bufferSize = 100; // Buffer 100 entries before writing
-  static const int _flushIntervalMs = 3000; // Flush every second
+  static const int _flushIntervalMs = 1000; // Flush every second
 
   bool _isInitialized = false;
   bool _isDisposed = false;
@@ -85,8 +85,8 @@ class EEGFileWriter {
 	  _eegDataSink!.writeln('timestamp,channel_1,channel_2,channel_3,channel_4,channel_5,channel_6,channel_7,channel_8,channel_9,channel_10,channel_11,channel_12,channel_13,channel_14');
 
 	  // Setup periodic flush timer
-	  _flushTimer = Timer.periodic(Duration(milliseconds: _flushIntervalMs), (_) {
-		_flushBuffer();
+	  _flushTimer = Timer.periodic(Duration(milliseconds: _flushIntervalMs), (_) async {
+		await _flushBuffer();
 	  });
 
 	  _isInitialized = true;
@@ -134,15 +134,17 @@ class EEGFileWriter {
 
 
   /// Flush the buffer to file
-  void _flushBuffer() {
+  Future<void> _flushBuffer() async {
 	if (_eegDataSink == null || _writeBuffer.isEmpty || _isDisposed) return;
 
+	// Atomically swap buffer to prevent concurrent modification
+	final localBuffer = List<String>.from(_writeBuffer);
+	_writeBuffer.clear();
+
 	try {
-	  for (String line in _writeBuffer) {
-		_eegDataSink!.writeln(line);
-	  }
-	  _eegDataSink!.flush();
-	  _writeBuffer.clear();
+	  _eegDataSink!.writeAll(localBuffer, '\n');
+	  _eegDataSink!.writeln(); // Final newline
+	  await _eegDataSink!.flush();
 
 	} catch (e) {
 	  _updateStatus("Error flushing buffer: $e");
@@ -154,9 +156,9 @@ class EEGFileWriter {
 
 
   /// Force flush any remaining data
-  void flush() {
+  Future<void> flush() async {
 	if (!_isDisposed) {
-	  _flushBuffer();
+	  await _flushBuffer();
 	}
   }
 
@@ -201,24 +203,19 @@ class EEGFileWriter {
 
 	  // Flush any remaining data before closing
 	  if (_eegDataSink != null && _writeBuffer.isNotEmpty) {
-		try {
-		  for (String line in _writeBuffer) {
-			_eegDataSink!.writeln(line);
-		  }
-		  _eegDataSink!.flush();
-		  _writeBuffer.clear();
-		} catch (e) {
-		  _updateStatus("Error during final flush: $e");
-		  _writeBuffer.clear(); // Clear buffer even if flush fails
-		}
+		await _flushBuffer();
 	  }
 
 	  // Close the sink
 	  if (_eegDataSink != null) {
-		await _eegDataSink!.close();
+		try {
+		  await _eegDataSink!.close();
+		} catch (e) {
+		  _updateStatus("Error closing sink: $e");
+		}
+		_eegDataSink = null;
 	  }
 
-	  _eegDataSink = null;
 	  _eegDataFile = null;
 	  _writeBuffer.clear();
 	  _isInitialized = false;

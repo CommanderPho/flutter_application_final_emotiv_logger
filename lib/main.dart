@@ -36,7 +36,7 @@ class EmotivHomePage extends StatefulWidget {
   State<EmotivHomePage> createState() => _EmotivHomePageState();
 }
 
-class _EmotivHomePageState extends State<EmotivHomePage> {
+class _EmotivHomePageState extends State<EmotivHomePage> with WidgetsBindingObserver {
   final EmotivBLEManager _bleManager = EmotivBLEManager();
   List<double> _latestEEGData = [];
   String _statusMessage = "Ready to connect";
@@ -57,6 +57,7 @@ class _EmotivHomePageState extends State<EmotivHomePage> {
   @override
   void initState() {
 	super.initState();
+	WidgetsBinding.instance.addObserver(this);
 	_initializeBluetooth();
 	_setupStreamListeners();
   }
@@ -174,7 +175,19 @@ Future<void> _connectToDeviceByName(String deviceName) async {
 }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+	super.didChangeAppLifecycleState(state);
+	if (state == AppLifecycleState.inactive ||
+		state == AppLifecycleState.paused ||
+		state == AppLifecycleState.detached) {
+	  // Flush buffered data when app goes to background
+	  _bleManager.flushFileBuffer();
+	}
+  }
+
+  @override
   void dispose() {
+	WidgetsBinding.instance.removeObserver(this);
 	_eegSubscription.cancel();
 	_statusSubscription.cancel();
 	_connectionSubscription.cancel();
