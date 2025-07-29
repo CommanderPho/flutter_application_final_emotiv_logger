@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'crypto_utils.dart';
 import 'eeg_file_writer.dart';
 
+
 class EmotivBLEManager {
 	// UUIDs from your Swift code
 	static const String deviceNameUuid = "81072F40-9F3D-11E3-A9DC-0002A5D5C51B";
@@ -36,6 +37,7 @@ class EmotivBLEManager {
 	// Add this field to store discovered devices
 	List<BluetoothDevice> _discoveredDevices = [];
 
+
 	// Stream controllers for data
 	final StreamController<List<double>> _eegDataController = StreamController<List<double>>.broadcast();
 	final StreamController<Uint8List> _memsDataController = StreamController<Uint8List>.broadcast();
@@ -46,6 +48,11 @@ class EmotivBLEManager {
 
 	// File writer instance
 	EEGFileWriter? _fileWriter;
+
+	// LSL outlet components
+	OutletWorker? _lslWorker;
+	StreamInfo? _eegStreamInfo;
+	bool _lslInitialized = false;
 
 	// Add this field
 	String? _customSaveDirectory;
@@ -62,8 +69,65 @@ class EmotivBLEManager {
 
 	// Add method to set custom directory
 	void setCustomSaveDirectory(String? directoryPath) {
-		print("EmotivBLEManager: Updating custom save directory directoryPath: ${directoryPath}");
+		print("EmotivBLEManager: Updating custom save directory directoryPath: $directoryPath");
 		_customSaveDirectory = directoryPath;
+	}
+
+	// Initialize LSL outlet for EEG data streaming
+	Future<bool> _initializeLSLOutlet() async {
+		try {
+			if (_lslInitialized) {
+				_updateStatus("LSL outlet already initialized");
+				return true;
+			}
+
+			// Create EEG stream info - determine channels from Emotiv data
+			// Based on the crypto_utils processing, each 16-byte chunk produces 8 values
+			final deviceId = _emotivDevice?.remoteId.toString() ?? "emotiv_unknown";
+			
+			_eegStreamInfo = StreamInfoFactory.createDoubleStreamInfo(
+				"Emotiv EEG",
+				"EEG",
+				DoubleChannelFormat(),
+				channelCount: 8, // 8 EEG channels from decrypted data
+				nominalSRate: 128.0, // Emotiv typically runs at 128 Hz
+				sourceId: deviceId
+			);
+
+			// Spawn LSL worker
+			_lslWorker = await OutletWorker.spawn();
+			
+			// Add the stream
+			final success = await _lslWorker!.addStream(_eegStreamInfo!);
+			
+			if (success) {
+				_lslInitialized = true;
+				_updateStatus("LSL outlet initialized successfully");
+				return true;
+			} else {
+				_updateStatus("Failed to add LSL stream");
+				return false;
+			}
+			
+		} catch (e) {
+			_updateStatus("Error initializing LSL outlet: $e");
+			return false;
+		}
+	}
+
+	// Push sample data to LSL stream safely
+	Future<bool> _pushToLSL(List<double> sample) async {
+		if (!_lslInitialized || _lslWorker == null || _eegStreamInfo == null) {
+			return false;
+		}
+		
+		try {
+			await _lslWorker!.pushSample("Emotiv EEG", sample);
+			return true;
+		} catch (e) {
+			print("LSL push error: $e");
+			return false;
+		}
 	}
 
 	Future<void> _initializeFileWriter() async {
@@ -186,6 +250,9 @@ class EmotivBLEManager {
 
 			// Initialize file writer after successful connection
 			await _initializeFileWriter();
+			
+			// Initialize LSL outlet
+			await _initializeLSLOutlet();
 
 			// Listen for disconnection
 			device.connectionState.listen((state) {
@@ -290,6 +357,9 @@ class EmotivBLEManager {
 
 			// Write to file using the file writer
 			_fileWriter?.writeEEGData(decodedValues);
+			
+			// Push to LSL stream
+			_pushToLSL(decodedValues);
 		}
 	}
 
@@ -307,10 +377,13 @@ class EmotivBLEManager {
 		_eegDataCharacteristic = null;
 		_memsDataCharacteristic = null;
 		_connectionController.add(false);
-		_updateStatus("Disconnected - closing file and restarting scan...");
+		_updateStatus("Disconnected - closing file and LSL stream...");
 
 		// Close file writer immediately to prevent timer conflicts
 		_closeFileWriter();
+		
+		// Close LSL outlet
+		_closeLSLOutlet();
 
 		// // Optionally restart scanning
 		// Future.delayed(const Duration(seconds: 2), () {
@@ -325,6 +398,28 @@ class EmotivBLEManager {
 		if (_fileWriter != null) {
 		  await _fileWriter!.dispose();
 		  _fileWriter = null;
+		}
+	}
+
+	Future<void> _closeLSLOutlet() async {
+		try {
+			if (_lslWorker != null) {
+				// Remove the stream if it was added
+				if (_eegStreamInfo != null) {
+					await _lslWorker!.removeStream("Emotiv EEG");
+				}
+				
+				// Dispose the worker
+				await _lslWorker!.dispose();
+				_lslWorker = null;
+			}
+			
+			_eegStreamInfo = null;
+			_lslInitialized = false;
+			_updateStatus("LSL outlet closed");
+			
+		} catch (e) {
+			_updateStatus("Error closing LSL outlet: $e");
 		}
 	}
 
@@ -345,11 +440,13 @@ class EmotivBLEManager {
 	}
 	else {
 	  await _closeFileWriter();
+	  await _closeLSLOutlet();
 	}
   }
 
 	void dispose() {
 		_closeFileWriter();
+		_closeLSLOutlet();
 		_eegDataController.close();
 		_memsDataController.close();
 		_connectionController.close();
