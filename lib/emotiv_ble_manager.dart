@@ -42,6 +42,7 @@ class EmotivBLEManager {
 	// Stream controllers for data
 	final StreamController<List<double>> _eegDataController = StreamController<List<double>>.broadcast();
 	final StreamController<Uint8List> _memsDataController = StreamController<Uint8List>.broadcast();
+	final StreamController<List<double>> _motionDataController = StreamController<List<double>>.broadcast();
 	final StreamController<bool> _connectionController = StreamController<bool>.broadcast();
 	final StreamController<String> _statusController = StreamController<String>.broadcast();
 	// Add a stream controller for found devices
@@ -61,6 +62,7 @@ class EmotivBLEManager {
 	// Getters for streams
 	Stream<List<double>> get eegDataStream => _eegDataController.stream;
 	Stream<Uint8List> get memsDataStream => _memsDataController.stream;
+	Stream<List<double>> get motionDataStream => _motionDataController.stream;
 	Stream<bool> get connectionStream => _connectionController.stream;
 	Stream<String> get statusStream => _statusController.stream;
 	Stream<List<String>> get foundDevicesStream => _foundDevicesController.stream;
@@ -334,7 +336,7 @@ class EmotivBLEManager {
 
 			characteristic.lastValueStream.listen((data) {
 				if (data.isNotEmpty) {
-				  _memsDataController.add(Uint8List.fromList(data));
+				  _processMemsData(Uint8List.fromList(data));
 				}
 			});
 
@@ -361,6 +363,19 @@ class EmotivBLEManager {
 			
 			// Push to LSL stream
 			_pushToLSL(decodedValues);
+		}
+	}
+
+	void _processMemsData(Uint8List data) {
+		// Process raw MEMS data and emit both raw and decoded motion data
+		_memsDataController.add(data);
+		
+		// Decode motion data from MEMS packet
+		final motionValues = CryptoUtils.decodeMotionData(data);
+		
+		if (motionValues.isNotEmpty && motionValues.any((v) => v != 0.0)) {
+			_motionDataController.add(motionValues);
+			print("Motion Data: [${motionValues.map((v) => v.toStringAsFixed(3)).join(', ')}]");
 		}
 	}
 
@@ -449,6 +464,7 @@ class EmotivBLEManager {
 		_closeLSLOutlet();
 		_eegDataController.close();
 		_memsDataController.close();
+		_motionDataController.close();
 		_connectionController.close();
 		_statusController.close();
 		_foundDevicesController.close();

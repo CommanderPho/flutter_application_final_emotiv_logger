@@ -40,9 +40,11 @@ class EmotivHomePage extends StatefulWidget {
 class _EmotivHomePageState extends State<EmotivHomePage> with WidgetsBindingObserver {
   final EmotivBLEManager _bleManager = EmotivBLEManager();
   List<double> _latestEEGData = [];
+  List<double> _latestMotionData = [];
   String _statusMessage = "Ready to connect";
   bool _isConnected = false;
   late StreamSubscription _eegSubscription;
+  late StreamSubscription _motionSubscription;
   late StreamSubscription _statusSubscription;
   late StreamSubscription _connectionSubscription;
 
@@ -82,6 +84,12 @@ class _EmotivHomePageState extends State<EmotivHomePage> with WidgetsBindingObse
 	_eegSubscription = _bleManager.eegDataStream.listen((data) {
 		setState(() {
 			_latestEEGData = data;
+		});
+	});
+
+	_motionSubscription = _bleManager.motionDataStream.listen((data) {
+		setState(() {
+			_latestMotionData = data;
 		});
 	});
 
@@ -194,6 +202,7 @@ Future<void> _connectToDeviceByName(String deviceName) async {
   void dispose() {
 	WidgetsBinding.instance.removeObserver(this);
 	_eegSubscription.cancel();
+	_motionSubscription.cancel();
 	_statusSubscription.cancel();
 	_connectionSubscription.cancel();
 	_bleManager.dispose();
@@ -300,6 +309,7 @@ Future<void> _connectToDeviceByName(String deviceName) async {
 			
 			// EEG Data Display
 			Expanded(
+			  flex: 2,
 			  child: Card(
 				child: Padding(
 				  padding: const EdgeInsets.all(16.0),
@@ -360,6 +370,124 @@ Future<void> _connectToDeviceByName(String deviceName) async {
 												fontFamily: 'monospace',
 												fontSize: 12,
 											  ),
+											),
+										  ),
+										),
+									  ],
+									),
+								  );
+								}),
+							  ],
+							),
+						  ),
+						),
+					],
+				  ),
+				),
+			  ),
+			),
+			
+			const SizedBox(height: 16),
+			
+			// Motion Data Display
+			Expanded(
+			  flex: 1,
+			  child: Card(
+				child: Padding(
+				  padding: const EdgeInsets.all(16.0),
+				  child: Column(
+					crossAxisAlignment: CrossAxisAlignment.start,
+					children: [
+					  Text(
+						'Motion Data Stream',
+						style: Theme.of(context).textTheme.titleMedium,
+					  ),
+					  const SizedBox(height: 8),
+					  if (_latestMotionData.isEmpty)
+						const Expanded(
+						  child: Center(
+							child: Text(
+							  'No motion data received yet...',
+							  textAlign: TextAlign.center,
+							  style: TextStyle(color: Colors.grey),
+							),
+						  ),
+						)
+					  else
+						Expanded(
+						  child: SingleChildScrollView(
+							child: Column(
+							  crossAxisAlignment: CrossAxisAlignment.start,
+							  children: [
+								const Text(
+								  'Latest Motion Sample (6-axis IMU):',
+								  style: TextStyle(fontWeight: FontWeight.bold),
+								),
+								const SizedBox(height: 8),
+								// Accelerometer data
+								Text(
+								  'Accelerometer (g):',
+								  style: TextStyle(fontWeight: FontWeight.w600, color: Colors.blue[700]),
+								),
+								...List.generate(3, (index) {
+								  final labels = ['AccX', 'AccY', 'AccZ'];
+								  return Padding(
+									padding: const EdgeInsets.symmetric(vertical: 1.0),
+									child: Row(
+									  children: [
+										SizedBox(
+										  width: 60,
+										  child: Text(
+											'${labels[index]}:',
+											style: const TextStyle(fontWeight: FontWeight.w500),
+										  ),
+										),
+										Expanded(
+										  child: Container(
+											padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+											decoration: BoxDecoration(
+											  color: Colors.blue[50],
+											  borderRadius: BorderRadius.circular(4),
+											),
+											child: Text(
+											  _latestMotionData[index].toStringAsFixed(3),
+											  style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+											),
+										  ),
+										),
+									  ],
+									),
+								  );
+								}),
+								const SizedBox(height: 8),
+								// Gyroscope data
+								Text(
+								  'Gyroscope (deg/s):',
+								  style: TextStyle(fontWeight: FontWeight.w600, color: Colors.green[700]),
+								),
+								...List.generate(3, (index) {
+								  final labels = ['GyroX', 'GyroY', 'GyroZ'];
+								  return Padding(
+									padding: const EdgeInsets.symmetric(vertical: 1.0),
+									child: Row(
+									  children: [
+										SizedBox(
+										  width: 60,
+										  child: Text(
+											'${labels[index]}:',
+											style: const TextStyle(fontWeight: FontWeight.w500),
+										  ),
+										),
+										Expanded(
+										  child: Container(
+											padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+											decoration: BoxDecoration(
+											  color: Colors.green[50],
+											  borderRadius: BorderRadius.circular(4),
+											),
+											child: Text(
+											  _latestMotionData[index + 3].toStringAsFixed(3),
+											  style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
 											),
 										  ),
 										),
