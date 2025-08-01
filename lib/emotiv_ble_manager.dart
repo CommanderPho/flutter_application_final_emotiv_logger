@@ -29,7 +29,7 @@ class EmotivBLEManager {
 
 	BluetoothDevice? _emotivDevice;
 	// control characteristic (0x40)
-	BluetoothCharacteristic? _controlCharacteristic;
+	// BluetoothCharacteristic? _controlCharacteristic;
 
 	// data characteristics
 	BluetoothCharacteristic? _eegDataCharacteristic;   // 0x41
@@ -45,7 +45,6 @@ class EmotivBLEManager {
 
 	// Stream controllers for data
 	final StreamController<List<double>> _eegDataController = StreamController<List<double>>.broadcast();
-	// final StreamController<Uint8List> _memsDataController = StreamController<Uint8List>.broadcast();
 	final StreamController<List<double>> _motionDataController = StreamController<List<double>>.broadcast();
 	final StreamController<bool> _connectionController = StreamController<bool>.broadcast();
 	final StreamController<String> _statusController = StreamController<String>.broadcast();
@@ -65,7 +64,6 @@ class EmotivBLEManager {
 
 	// Getters for streams
 	Stream<List<double>> get eegDataStream => _eegDataController.stream;
-	// Stream<Uint8List> get memsDataStream => _memsDataController.stream;
 	Stream<List<double>> get motionDataStream => _motionDataController.stream;
 	Stream<bool> get connectionStream => _connectionController.stream;
 	Stream<String> get statusStream => _statusController.stream;
@@ -294,10 +292,7 @@ class EmotivBLEManager {
 
 					final id = c.uuid.toString().toUpperCase();
 
-					if (id == controlUuid) {
-						print('>> CONTROL characteristic found');
-						_controlCharacteristic = c;
-					} else if (id == eegDataUuid) {
+					if (id == eegDataUuid) {
 						_eegDataCharacteristic = c;
 						await _setupEEGDataCharacteristic(c);
 					} else if (id == motionDataUuid) {
@@ -419,13 +414,13 @@ class EmotivBLEManager {
 	// 0x0001 -> start EEG (0x41)
 	// 0x0002 -> start MEMS (0x42)
 	Future<void> _enableBluetoothDataStreams() async {
-		if (_controlCharacteristic == null) return;
+		if (_eegDataCharacteristic == null) return;
 
 		// enable EEG
-		await _controlCharacteristic!.write(Uint8List.fromList([0x01, 0x00]), withoutResponse: true);
+		await _eegDataCharacteristic!.write(Uint8List.fromList([0x01, 0x00]), withoutResponse: true);
 		print('wrote 0x01');
 		// enable MEMS / motion
-		await _controlCharacteristic!.write(Uint8List.fromList([0x02, 0x00]), withoutResponse: true);
+		await _eegDataCharacteristic!.write(Uint8List.fromList([0x02, 0x00]), withoutResponse: true);
 		print('wrote 0x02');
 	}
 
@@ -433,7 +428,7 @@ class EmotivBLEManager {
 	void _handleDisconnection() {
 		_isConnected = false;
 		_emotivDevice = null;
-		_controlCharacteristic = null;
+		// _controlCharacteristic = null;
 		_eegDataCharacteristic = null;
 		_motionDataCharacteristic = null;
 		_connectionController.add(false);
