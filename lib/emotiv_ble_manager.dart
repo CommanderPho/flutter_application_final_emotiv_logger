@@ -403,8 +403,8 @@ class EmotivBLEManager {
 	}
 
 	bool _validateData(Uint8List data) {
-		if (data.length < readSize) {
-			print("EmotivBLEManager: Data size too small: ${data.length}");
+		if (data.length < readSize) { // Looks like it might be 20 for motion, 32 for EEG?
+			print("EmotivBLEManager: Data size too small: ${data.length}, expected size: ${readSize}\nread data: ${data}");
 			return false;
 		}
 		return true;
@@ -417,10 +417,10 @@ class EmotivBLEManager {
 		if (_eegDataCharacteristic == null) return;
 
 		// enable EEG
-		await _eegDataCharacteristic!.write(Uint8List.fromList([0x01, 0x00]), withoutResponse: true);
+		await _eegDataCharacteristic!.write(Uint8List.fromList([0x01, 0x00]), withoutResponse: false);
 		print('wrote 0x01');
 		// enable MEMS / motion
-		await _eegDataCharacteristic!.write(Uint8List.fromList([0x02, 0x00]), withoutResponse: true);
+		await _eegDataCharacteristic!.write(Uint8List.fromList([0x02, 0x00]), withoutResponse: false);
 		print('wrote 0x02');
 	}
 
