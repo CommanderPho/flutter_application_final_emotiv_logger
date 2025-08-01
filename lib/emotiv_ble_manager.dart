@@ -11,9 +11,9 @@ import 'eeg_file_writer.dart';
 
 class EmotivBLEManager {
 	// UUIDs from your Swift code
-	static const String deviceNameUuid = "81072F40-9F3D-11E3-A9DC-0002A5D5C51B";
-	static const String transferEEGDataUuid = "81072F41-9F3D-11E3-A9DC-0002A5D5C51B"; // UUID of the main data stream with ID 0x10
-	static const String transferMotionUuid = "81072F42-9F3D-11E3-A9DC-0002A5D5C51B"; // UUID of the gyro/other? data stream with ID 0x20
+	static const String controlUuid = "81072F40-9F3D-11E3-A9DC-0002A5D5C51B";
+	static const String eegDataUuid = "81072F41-9F3D-11E3-A9DC-0002A5D5C51B"; // UUID of the main data stream with ID 0x10
+	static const String motionDataUuid = "81072F42-9F3D-11E3-A9DC-0002A5D5C51B"; // UUID of the gyro/other? data stream with ID 0x20
 
 
 // service.characteristics[0].uuid.toString().toUpperCase()
@@ -28,8 +28,12 @@ class EmotivBLEManager {
 	static const int readSize = 32;
 
 	BluetoothDevice? _emotivDevice;
-	BluetoothCharacteristic? _eegDataCharacteristic;
-	BluetoothCharacteristic? _motionDataCharacteristic;
+	// control characteristic (0x40)
+	BluetoothCharacteristic? _controlCharacteristic;
+
+	// data characteristics
+	BluetoothCharacteristic? _eegDataCharacteristic;   // 0x41
+	BluetoothCharacteristic? _motionDataCharacteristic; // 0x42
 
 	final bool _shouldAutoConnectToFirst = false;
 	bool _isConnected = false;
@@ -170,7 +174,7 @@ class EmotivBLEManager {
 		try {
 		// Start scanning for devices with the specific service UUID
 		await FlutterBluePlus.startScan(
-			withServices: [Guid(deviceNameUuid)],
+			withServices: [Guid(controlUuid)],
 			timeout: const Duration(seconds: 30),
 		);
 
@@ -285,20 +289,26 @@ class EmotivBLEManager {
 			for (BluetoothService service in services) {
 				print("Discovered service: ${service.uuid}");
 
-				for (BluetoothCharacteristic characteristic in service.characteristics) {
-					print("Discovered characteristic: ${characteristic.uuid}");
+				for (BluetoothCharacteristic c in service.characteristics) {
+					print("Discovered characteristic: ${c.uuid}");
 
-					if (characteristic.uuid.toString().toUpperCase() == transferEEGDataUuid.toUpperCase()) {
-						_eegDataCharacteristic = characteristic;
-						await _setupEEGDataCharacteristic(characteristic);
-					} else if (characteristic.uuid.toString().toUpperCase() == transferMotionUuid.toUpperCase()) {
-						_motionDataCharacteristic = characteristic;
-						print("Discovered MOTION characteristic: ${characteristic.uuid}");
-						await _setupMotionCharacteristic(characteristic);
+					final id = c.uuid.toString().toUpperCase();
+
+					if (id == controlUuid) {
+						_controlCharacteristic = c;
+					} else if (id == eegDataUuid) {
+						_eegDataCharacteristic = c;
+						await _setupEEGDataCharacteristic(c);
+					} else if (id == motionDataUuid) {
+						_motionDataCharacteristic = c;
+						await _setupMotionCharacteristic(c);   // only setNotifyValue
 					}
 				}
 			}
 
+			// Now ask the headset to start both streams
+			await _enableBluetoothDataStreams();
+			
 			_updateStatus("Setup complete - receiving data");
 
 		} catch (e) {
@@ -318,44 +328,24 @@ class EmotivBLEManager {
 				}
 			});
 
-			// Write configuration data (equivalent to your Swift code) -- I think this is to indicate to the headset that we are connected.
-			if (characteristic.properties.write) {
-				final configData = Uint8List.fromList([0x01, 0x00]); // 0x0001 as little-endian
-				await characteristic.write(configData, withoutResponse: false);
-			}
+			// // Write configuration data (equivalent to your Swift code) -- I think this is to indicate to the headset that we are connected.
+			// if (characteristic.properties.write) {
+			// 	final configData = Uint8List.fromList([0x01, 0x00]); // 0x0001 as little-endian
+			// 	await characteristic.write(configData, withoutResponse: false);
+			// }
 
-			_updateStatus("Data characteristic configured");
-
-		} catch (e) {
-			_updateStatus("Error setting up data characteristic: $e");
-		}
-	}
-
-	Future<void> _setupMotionCharacteristic(BluetoothCharacteristic characteristic) async {
-		try {
-			await characteristic.setNotifyValue(true);
-
-			characteristic.lastValueStream.listen((data) {
-				if (data.isNotEmpty) {
-				  _processMotionData(Uint8List.fromList(data));
-				}
-			});
-
-			// Write configuration data (equivalent to your Swift code) -- I think this is to indicate to the headset that we are connected.
-			if (characteristic.properties.write) {
-				final configData = Uint8List.fromList([0x01, 0x00]); // 0x0001 as little-endian
-				await characteristic.write(configData, withoutResponse: false);
-			}
-      
-			_updateStatus("Motion characteristic configured");
+			_updateStatus("EEG characteristic configured");
 
 		} catch (e) {
-			_updateStatus("Error setting up Motion characteristic: $e");
+			_updateStatus("Error setting up EEG data characteristic: $e");
 		}
 	}
 
 
 	void _processEEGData(Uint8List data) {
+		
+		print("_processEEGData(rawData: [${data.map((v) => v.toString()).join(', ')}]");
+
 		if (!_validateData(data)) return;
 
 		// Decrypt and decode the data
@@ -373,9 +363,33 @@ class EmotivBLEManager {
 		}
 	}
 
+
+	Future<void> _setupMotionCharacteristic(BluetoothCharacteristic characteristic) async {
+		try {
+			await characteristic.setNotifyValue(true);
+
+			characteristic.lastValueStream.listen((data) {
+				if (data.isNotEmpty) {
+				  _processMotionData(Uint8List.fromList(data));
+				}
+			});
+
+			// // Write configuration data (equivalent to your Swift code) -- I think this is to indicate to the headset that we are connected.
+			// if (characteristic.properties.write) {
+			// 	final configData = Uint8List.fromList([0x01, 0x00]); // 0x0001 as little-endian
+			// 	await characteristic.write(configData, withoutResponse: false);
+			// }
+      
+			_updateStatus("Motion characteristic configured");
+
+		} catch (e) {
+			_updateStatus("Error setting up Motion characteristic: $e");
+		}
+	}
+
 	void _processMotionData(Uint8List data) {
 		// if (!_validateData(data)) return; // I think that's okay here
-
+		print("_processMotionData(rawData: [${data.map((v) => v.toString()).join(', ')}]");
 		// Process raw Motion data and emit only the decoded motion data
 
 		// Decode motion data from Motion packet
@@ -400,9 +414,24 @@ class EmotivBLEManager {
 		return true;
 	}
 
+
+	// 0x0001 -> start EEG (0x41)
+	// 0x0002 -> start MEMS (0x42)
+	Future<void> _enableBluetoothDataStreams() async {
+		if (_controlCharacteristic == null) return;
+
+		// enable EEG
+		await _controlCharacteristic!.write(Uint8List.fromList([0x01, 0x00]), withoutResponse: true);
+
+		// enable MEMS / motion
+		await _controlCharacteristic!.write(Uint8List.fromList([0x02, 0x00]), withoutResponse: true);
+	}
+
+
 	void _handleDisconnection() {
 		_isConnected = false;
 		_emotivDevice = null;
+		_controlCharacteristic = null;
 		_eegDataCharacteristic = null;
 		_motionDataCharacteristic = null;
 		_connectionController.add(false);

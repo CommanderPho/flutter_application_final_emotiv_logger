@@ -83,6 +83,10 @@ class CryptoUtils {
   /// Based on emotiv_lsl implementation for EPOC X IMU (ICM-20948)
   /// Returns [AccX, AccY, AccZ, GyroX, GyroY, GyroZ]
   static List<double> decodeMotionData(Uint8List data) {
+    // According to o3 (Reasoning) AI -- EEG packets (0x41) are AES-encrypted; motion packets (0x42) are not
+    // encrypted on an EPOC X, so your decodeMotionData only needs to parse the raw
+    // 32 bytes—no AES involved.
+
     try {
       // Motion data positions in EPOC X packet (based on CyKit gyroDATA)
       final motionPositions = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 30, 31];
