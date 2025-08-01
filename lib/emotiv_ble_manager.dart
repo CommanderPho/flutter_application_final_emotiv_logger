@@ -293,6 +293,7 @@ class EmotivBLEManager {
 						await _setupEEGDataCharacteristic(characteristic);
 					} else if (characteristic.uuid.toString().toUpperCase() == transferMotionUuid.toUpperCase()) {
 						_motionDataCharacteristic = characteristic;
+						print("Discovered MOTION characteristic: ${characteristic.uuid}");
 						await _setupMotionCharacteristic(characteristic);
 					}
 				}
