@@ -13,7 +13,7 @@ class EmotivBLEManager {
 	// UUIDs from your Swift code
 	static const String deviceNameUuid = "81072F40-9F3D-11E3-A9DC-0002A5D5C51B";
 	static const String transferEEGDataUuid = "81072F41-9F3D-11E3-A9DC-0002A5D5C51B"; // UUID of the main data stream with ID 0x10
-	static const String transferMemsUuid = "81072F42-9F3D-11E3-A9DC-0002A5D5C51B"; // UUID of the gyro/other? data stream with ID 0x20
+	static const String transferMotionUuid = "81072F42-9F3D-11E3-A9DC-0002A5D5C51B"; // UUID of the gyro/other? data stream with ID 0x20
 
 
 // service.characteristics[0].uuid.toString().toUpperCase()
@@ -29,7 +29,7 @@ class EmotivBLEManager {
 
 	BluetoothDevice? _emotivDevice;
 	BluetoothCharacteristic? _eegDataCharacteristic;
-	BluetoothCharacteristic? _memsDataCharacteristic;
+	BluetoothCharacteristic? _motionDataCharacteristic;
 
 	final bool _shouldAutoConnectToFirst = false;
 	bool _isConnected = false;
@@ -41,7 +41,7 @@ class EmotivBLEManager {
 
 	// Stream controllers for data
 	final StreamController<List<double>> _eegDataController = StreamController<List<double>>.broadcast();
-	final StreamController<Uint8List> _memsDataController = StreamController<Uint8List>.broadcast();
+	// final StreamController<Uint8List> _memsDataController = StreamController<Uint8List>.broadcast();
 	final StreamController<List<double>> _motionDataController = StreamController<List<double>>.broadcast();
 	final StreamController<bool> _connectionController = StreamController<bool>.broadcast();
 	final StreamController<String> _statusController = StreamController<String>.broadcast();
@@ -61,7 +61,7 @@ class EmotivBLEManager {
 
 	// Getters for streams
 	Stream<List<double>> get eegDataStream => _eegDataController.stream;
-	Stream<Uint8List> get memsDataStream => _memsDataController.stream;
+	// Stream<Uint8List> get memsDataStream => _memsDataController.stream;
 	Stream<List<double>> get motionDataStream => _motionDataController.stream;
 	Stream<bool> get connectionStream => _connectionController.stream;
 	Stream<String> get statusStream => _statusController.stream;
@@ -291,9 +291,9 @@ class EmotivBLEManager {
 					if (characteristic.uuid.toString().toUpperCase() == transferEEGDataUuid.toUpperCase()) {
 						_eegDataCharacteristic = characteristic;
 						await _setupEEGDataCharacteristic(characteristic);
-					} else if (characteristic.uuid.toString().toUpperCase() == transferMemsUuid.toUpperCase()) {
-						_memsDataCharacteristic = characteristic;
-						await _setupMemsCharacteristic(characteristic);
+					} else if (characteristic.uuid.toString().toUpperCase() == transferMotionUuid.toUpperCase()) {
+						_motionDataCharacteristic = characteristic;
+						await _setupMotionCharacteristic(characteristic);
 					}
 				}
 			}
@@ -330,20 +330,20 @@ class EmotivBLEManager {
 		}
 	}
 
-	Future<void> _setupMemsCharacteristic(BluetoothCharacteristic characteristic) async {
+	Future<void> _setupMotionCharacteristic(BluetoothCharacteristic characteristic) async {
 		try {
 			await characteristic.setNotifyValue(true);
 
 			characteristic.lastValueStream.listen((data) {
 				if (data.isNotEmpty) {
-				  _processMemsData(Uint8List.fromList(data));
+				  _processMotionData(Uint8List.fromList(data));
 				}
 			});
 
-			_updateStatus("MEMS characteristic configured");
+			_updateStatus("Motion characteristic configured");
 
 		} catch (e) {
-			_updateStatus("Error setting up MEMS characteristic: $e");
+			_updateStatus("Error setting up Motion characteristic: $e");
 		}
 	}
 
@@ -356,7 +356,7 @@ class EmotivBLEManager {
 
 		if (decodedValues.isNotEmpty) {
 			_eegDataController.add(decodedValues);
-			print("EEG Data: ${decodedValues.take(5).join(', ')}..."); // Print first 5 values
+			// print("EEG Data: ${decodedValues.take(5).join(', ')}..."); // Print first 5 values
 
 			// Write to file using the file writer
 			_fileWriter?.writeEEGData(decodedValues);
@@ -366,16 +366,22 @@ class EmotivBLEManager {
 		}
 	}
 
-	void _processMemsData(Uint8List data) {
-		// Process raw MEMS data and emit both raw and decoded motion data
-		_memsDataController.add(data);
-		
-		// Decode motion data from MEMS packet
-		final motionValues = CryptoUtils.decodeMotionData(data);
-		
+	void _processMotionData(Uint8List data) {
+		// if (!_validateData(data)) return; // I think that's okay here
+
+		// Process raw Motion data and emit only the decoded motion data
+
+		// Decode motion data from Motion packet
+		final motionValues = CryptoUtils.decodeMotionData(data);		
 		if (motionValues.isNotEmpty && motionValues.any((v) => v != 0.0)) {
 			_motionDataController.add(motionValues);
 			print("Motion Data: [${motionValues.map((v) => v.toStringAsFixed(3)).join(', ')}]");
+			// Write to file using the file writer
+			// _fileWriter?.writeEEGData(motionValues); // TODO: NOT IMPLEMENTED
+			
+			// Push to LSL stream
+			// _pushToLSL(motionValues);
+
 		}
 	}
 
@@ -391,7 +397,7 @@ class EmotivBLEManager {
 		_isConnected = false;
 		_emotivDevice = null;
 		_eegDataCharacteristic = null;
-		_memsDataCharacteristic = null;
+		_motionDataCharacteristic = null;
 		_connectionController.add(false);
 		_updateStatus("Disconnected - closing file and LSL stream...");
 
@@ -463,7 +469,6 @@ class EmotivBLEManager {
 		_closeFileWriter();
 		_closeLSLOutlet();
 		_eegDataController.close();
-		_memsDataController.close();
 		_motionDataController.close();
 		_connectionController.close();
 		_statusController.close();
