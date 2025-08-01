@@ -341,6 +341,12 @@ class EmotivBLEManager {
 				}
 			});
 
+			// Write configuration data (equivalent to your Swift code) -- I think this is to indicate to the headset that we are connected.
+			if (characteristic.properties.write) {
+				final configData = Uint8List.fromList([0x01, 0x00]); // 0x0001 as little-endian
+				await characteristic.write(configData, withoutResponse: false);
+			}
+      
 			_updateStatus("Motion characteristic configured");
 
 		} catch (e) {
