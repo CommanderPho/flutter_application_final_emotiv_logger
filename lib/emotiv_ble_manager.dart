@@ -295,6 +295,7 @@ class EmotivBLEManager {
 					final id = c.uuid.toString().toUpperCase();
 
 					if (id == controlUuid) {
+						print('>> CONTROL characteristic found');
 						_controlCharacteristic = c;
 					} else if (id == eegDataUuid) {
 						_eegDataCharacteristic = c;
@@ -344,7 +345,7 @@ class EmotivBLEManager {
 
 	void _processEEGData(Uint8List data) {
 		
-		print("_processEEGData(rawData: [${data.map((v) => v.toString()).join(', ')}]");
+		// print("_processEEGData(rawData: [${data.map((v) => v.toString()).join(', ')}]");
 
 		if (!_validateData(data)) return;
 
@@ -422,9 +423,10 @@ class EmotivBLEManager {
 
 		// enable EEG
 		await _controlCharacteristic!.write(Uint8List.fromList([0x01, 0x00]), withoutResponse: true);
-
+		print('wrote 0x01');
 		// enable MEMS / motion
 		await _controlCharacteristic!.write(Uint8List.fromList([0x02, 0x00]), withoutResponse: true);
+		print('wrote 0x02');
 	}
 
 
@@ -481,8 +483,8 @@ class EmotivBLEManager {
 	}
 
 	void _updateStatus(String status) {
-    print(status);
-    _statusController.add(status);
+		print(status);
+		_statusController.add(status);
 	}
 
 	void _updateFoundDevices(List<String> devices) {
