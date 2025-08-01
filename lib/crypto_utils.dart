@@ -48,7 +48,7 @@ class CryptoUtils {
   
   static List<double> decryptToDoubleList(Uint8List data) {
     try {
-      final keyString = '6566565666756557';
+      final keyString = '6566565666756557'; // wtf is this 2025-07-31
       final key = Key.fromUtf8(keyString.padRight(16, '0').substring(0, 16));
       
       final encrypter = Encrypter(AES(key, mode: AESMode.ecb, padding: null));
@@ -74,7 +74,7 @@ class CryptoUtils {
       
       return results;
     } catch (e) {
-      print('Decryption error: $e');
+        print('Decryption error: $e');
       return [];
     }
   }
